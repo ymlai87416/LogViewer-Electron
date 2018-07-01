@@ -9,7 +9,7 @@ function createWindow () {
   // Create the browser window.
   let {width, height} = require('electron').screen.getPrimaryDisplay().size;
 
-  mainWindow = new BrowserWindow({width: width, height: height})
+  mainWindow = new BrowserWindow({width: width, height: height,frame:false})
 
   // and load the index.html of the app.
   mainWindow.loadFile('index.html')

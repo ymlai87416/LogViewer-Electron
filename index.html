@@ -529,30 +529,30 @@
         $("#ControlPanel").animate({ right: panelWidth * -1 });
       }
       else {
-        $("#ControlPanel").animate({ right: 10 });
+        $("#ControlPanel").animate({ right: 25 });
       }
     }
   </script>
 </head>
 
-<body>
-  <!-- <div id="title-bar">
+<body style="overflow: hidden">
+  <div id="title-bar" class="noselect" style="height: 3%;">
 
-        <div id="title"></div>
+    <div id="title">Log Viewer</div>
 
-        <div id="title-bar-btns">
+    <div id="title-bar-btns">
 
-             <button id="min-btn">-</button>
+      <button id="min-btn">-</button>
 
-             <button id="max-btn">+</button>
+      <button id="max-btn">+</button>
 
-             <button id="close-btn">x</button>
+      <button id="close-btn">x</button>
 
-        </div>
+    </div>
 
-   </div>  -->
+  </div>
   <div id="ControlPanel" class="ControlPanel noselect">
-    <button id="MenuBtn" style="position: absolute;left: -50px;height: 40px;width: 40px;font-size: 30px;" onclick="OpenMenu()">≡</button>
+    <button id="MenuBtn" style="position: absolute;left: -50px;height: 35px;width: 35px;font-size: 20px;" onclick="OpenMenu()">≡</button>
     <div class="ControlPanelContent">
       <div class="regexForm settingSection">
         <h3>Regex Settings</h3>
@@ -658,7 +658,7 @@
       </div>
     </div>
   </div>
-  <div id="LogArea" style="height: 100%;"></div>
+  <div id="LogArea" style="height: 97%;overflow: auto;"></div>
 </body>
 
 

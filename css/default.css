@@ -1,3 +1,33 @@
+html {
+
+    margin: 0px;
+   
+    padding: 0px;
+   
+   }
+   
+   
+   
+   body {
+   
+    padding: 0px;
+   
+    margin: 0px;
+   
+    background-color: #2D2D30;      
+   
+    position: absolute;
+   
+    top: 0px;
+   
+    left: 0px;
+   
+    right: 0px;
+   
+    bottom: 0px;
+   
+   }
+
 .logRow {
     margin-top: 2px;
     margin-bottom: 2px;
@@ -14,7 +44,7 @@ body {
 
 .ControlPanel {
     width: 550px;
-    right: 10;
+    right: 25;
     position: fixed;
 }
 
@@ -220,4 +250,22 @@ div .column button {
    
    }
    
-   
+   /* width */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #888; 
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #555; 
+}

@@ -15,6 +15,7 @@
   <script src="./js/colorpicker.js"></script>
   <script>if (window.module) module = window.module;</script>
   <script>
+    var Dialogs = require('dialogs');
     var iCnt = 0;
     var logArr = [];
     var idArr = [];
@@ -107,6 +108,7 @@
       UnselectAllbtnOnClick();
       config.checkedLogLevel.forEach(x => {
         $("#cb_" + x).prop('checked', true);
+        checkedLogLevel.push(x);
       })
 
       ClearTextFilter();
@@ -196,10 +198,14 @@
     }
 
     function PromptLoadConfig() {
-      var input = prompt("Enter config json below:");
-      if (input != null) {
-        LoadConfig(input);
-      }
+
+      var dialogs = Dialogs(opts = {})
+      dialogs.prompt('Enter config json below:', '', function (ok) {
+        if (ok != undefined) {
+          LoadConfig(ok);
+        }
+      })
+
     }
 
     $(function () {
@@ -365,7 +371,7 @@
       var args = require('electron').remote.process.argv;
       var configPath = args[1];
       if (configPath != null) {
-        const fs = require("fs");        
+        const fs = require("fs");
         // Asynchronous read
         fs.readFile(configPath, function (err, data) {
           if (err) {
@@ -374,7 +380,7 @@
           var configJson = data.toString();
           LoadConfig(configJson);
         });
-      }      
+      }
     });
 
     function initLogLevel() {

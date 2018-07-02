@@ -82,6 +82,11 @@ div .column button {
 .row {
     margin-bottom: 5px;
 }
+
+pre{
+    padding-left: 20px;
+}
+
 .loader {
     border: 6px solid #f3f3f3;
     border-radius: 50%;

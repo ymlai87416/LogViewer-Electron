@@ -98,7 +98,7 @@ input {
 }
 
 div .column:first-child {
-    width: 40%;
+    width: 100px;
 }
 
 div .column button {
@@ -268,4 +268,34 @@ div .column button {
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
     background: #555; 
+}
+
+/*
+* .electron-in-page-search-window is a class specified to default
+* <webview> element for search window.
+*/
+.electron-in-page-search-window {
+    position: fixed;
+    top: 0;
+    right: 0;
+    border: solid grey 1px;
+    background-color: white;
+    width: 300px;
+    height: 36px;
+}
+
+/*
+* .search-inactive is added to search window <webview> when the window
+* is inactive.
+*/
+.search-inactive {
+    visibility: hidden;
+}
+
+/*
+* .search-inactive is added to search window <webview> when the window
+* is active.
+*/
+.search-active {
+    visibility: visible;
 }

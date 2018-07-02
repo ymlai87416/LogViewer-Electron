@@ -21,6 +21,16 @@
         const window = remote.getCurrentWindow();
         window.close();
       }); 
+
+      document.addEventListener("keydown", function (e) {
+        
+        if (e.which === 123) {         
+          remote.getCurrentWindow().toggleDevTools();
+        } else if (e.which === 116) {
+          location.reload();
+        }
+      });
+
     }; 
     
     document.onreadystatechange = function () {

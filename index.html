@@ -15,6 +15,7 @@
   <script src="./js/colorpicker.js"></script>
   <script>if (window.module) module = window.module;</script>
   <script>
+    var RunningInElectron = false;
     var Dialogs = require('dialogs');
     var iCnt = 0;
     var logArr = [];
@@ -43,7 +44,17 @@
             }
           }
         }
-        rawFile.send(null);
+        rawFile.onerror = function (e) {
+          alert("Failed to load file " + file);
+          reject("Failed to load file.");
+        }
+
+        try {
+          rawFile.send(null);
+        } catch (err) {
+          alert("Failed to load file " + file + "," + err);
+          reject(err);
+        }
       })
     };
     function log(datetime, content, url, id, logLevel) {
@@ -199,17 +210,48 @@
 
     function PromptLoadConfig() {
 
-      var dialogs = Dialogs(opts = {})
-      dialogs.prompt('Enter config json below:', '', function (ok) {
-        if (ok != undefined) {
-          LoadConfig(ok);
-        }
-      })
+      if (RunningInElectron) {
+        var dialogs = Dialogs(opts = {})
+        dialogs.prompt('Enter config json below:', '', function (ok) {
+          if (ok != undefined) {
+            LoadConfig(ok);
+          }
+        })
 
+        // Retrieve the electron in page search module
+        const searchInPage = require('electron-in-page-search').default;
+        const remote = require('electron').remote;
+        // or
+        // import searchInPage from 'electron-in-page-search';
+
+        // Create an instance with the current window
+        const inPageSearch = searchInPage(remote.getCurrentWebContents());
+
+        // Attach an event listener to open the search menu
+        document.getElementById('trigger-search').addEventListener('click', () => {
+          inPageSearch.openSearchWindow();
+        });
+
+        // Alternatively add the key event listener [CTRL+F]
+        window.addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.keyCode === 70) {
+            inPageSearch.openSearchWindow();
+          }
+        }, false);
+
+
+      } else {
+        var input = prompt("Enter config json below:");
+        if (input != null) {
+          LoadConfig(input);
+        }
+      }
     }
 
     $(function () {
-
+      if ((window && window.process && window.process.type) != undefined) {
+        RunningInElectron = true;
+      }
       initLogLevel();
 
       $("#MAX_LOG_COUNT").text(MAX_LOG_FILE);
@@ -365,22 +407,45 @@
         $(".ControlPanelContent").css('transition', 'opacity .5s ease-out');
         $(".ControlPanelContent").css('opacity', '0.5');
       });
-
-
       //Electron init..
-      var args = require('electron').remote.process.argv;
-      var configPath = args[1];
-      if (configPath != null) {
-        const fs = require("fs");
-        // Asynchronous read
-        fs.readFile(configPath, function (err, data) {
-          if (err) {
-            return alert(err);
+      if (RunningInElectron) {
+        var args = require('electron').remote.process.argv;
+        var configPath = args[1];
+        if (configPath != null) {
+          const fs = require("fs");
+          // Asynchronous read
+          fs.readFile(configPath, function (err, data) {
+            if (err) {
+              return alert(err);
+            }
+            var configJson = data.toString();
+            LoadConfig(configJson);
+          });
+        }
+       
+        // Retrieve the electron in page search module
+        const searchInPage = require('electron-in-page-search').default;
+        const remote = require('electron').remote;
+        // or
+        // import searchInPage from 'electron-in-page-search';
+
+        // Create an instance with the current window
+        const inPageSearch = searchInPage(remote.getCurrentWebContents());
+
+        // Alternatively add the key event listener [CTRL+F]
+        window.addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.keyCode === 70) {
+            inPageSearch.openSearchWindow();
           }
-          var configJson = data.toString();
-          LoadConfig(configJson);
-        });
+        }, false);
+
+
       }
+      //Hide title bar if running in native html
+      if (!RunningInElectron) {
+        $("#title-bar").css("visibility", "collapse");
+      }
+
     });
 
     function initLogLevel() {
@@ -485,8 +550,6 @@
               console.log(err);
             }
           }
-        }).catch(function (err) {
-          alert(err);
         });
         console.timeEnd(tmpTimerName);
         promises.push(promise);
@@ -505,6 +568,8 @@
 
         $(".loader").css("visibility", "hidden");
 
+      }, function () {//on error         
+        $(".loader").css("visibility", "hidden");
       });
 
     }
@@ -599,22 +664,46 @@
       <hr>
       <div class="settingSection">
         <h3>Ignore Text</h3>
-        <div>Ignore Text:
-
-          <input type="textbox" id="filterInput">
-          <input type="button" value="Add" id="AddTextFilterBtn"></input>
-          <input type="button" value="Clear All" onclick="ClearTextFilter()"></input>
-          <div id="filteredText" style="font-weight:bold"></div>
+        <div style="display: table;width:100%;border:0">
+          <div class="row">
+            <div class="column">
+              <span>
+                Ignore Text:
+              </span>
+            </div>
+            <div class="column">
+              <input type="textbox" id="filterInput">
+              <input type="button" value="Add" id="AddTextFilterBtn"></input>
+              <input type="button" value="Clear All" onclick="ClearTextFilter()"></input>
+            </div>
+          </div>
+          <div class="row">
+            <div class="column">
+              <div id="filteredText" style="font-weight:bold"></div>
+            </div>
+          </div>
         </div>
       </div>
       <hr>
       <div class="settingSection">
         <h3>Include Text</h3>
-        <div> Include:
-          <input type="textbox" id="includeInput">
-          <input type="button" value="Add" id="AddTextBtn"></input>
-          <input type="button" value="Clear All" onclick="ClearTextInclude()"></input>
-          <div id="IncludedText" style="font-weight:bold"></div>
+        <div style="display: table;width:100%;border:0">
+          <div class="row">
+            <div class="column">
+              <span>Include:
+              </span>
+            </div>
+            <div class="column">
+              <input type="textbox" id="includeInput">
+              <input type="button" value="Add" id="AddTextBtn"></input>
+              <input type="button" value="Clear All" onclick="ClearTextInclude()"></input>
+            </div>
+          </div>
+          <div class="row">
+            <div class="column">
+              <div id="IncludedText" style="font-weight:bold"></div>
+            </div>
+          </div>
         </div>
       </div>
       <hr>

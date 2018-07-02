@@ -40,6 +40,7 @@
             }
             if (rawFile.status !== 200) {
               var errorMsg = 'URL: ' + rawFile.responseURL + '\nStatus code: ' + rawFile.status + '\nMessage: ' + rawFile.statusText;
+              alert(errorMsg);
               reject(errorMsg);
             }
           }
@@ -55,8 +56,8 @@
           alert("Failed to load file " + file + "," + err);
           reject(err);
         }
-      })
-    };
+      });
+    }
     function log(datetime, content, url, id, logLevel) {
       this.datetime = datetime;
       this.content = content;

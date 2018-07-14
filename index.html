@@ -1,5 +1,6 @@
 <html>
 <!--TODO line number/seperate between files?-->
+<!--TODO 自動reload&Resume去原先個位? Blink新加果行? -->
 
 <head>
   <meta charset="UTF-8">
@@ -16,6 +17,7 @@
   <script>if (window.module) module = window.module;</script>
   <script>
     var RunningInElectron = false;
+    var oldColor;
     var Dialogs = require('dialogs');
     var iCnt = 0;
     var logArr = [];
@@ -25,6 +27,7 @@
     var textFilter = [];
     var textIncluded = [];
     var MAX_LOG_FILE = 10;
+    var rgbArr = [];
     var LOG_LEVELS = ["ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "WARN"];
     function readTextFile(file, id) {
       return new Promise(function (resolve, reject) {
@@ -67,33 +70,49 @@
 
     }
 
+    function rgb(r, g, b) {
+      this.r = r;
+      this.g = g;
+      this.b = b;
+    }
+
     function GetConfigurationJson() {
       //TODO store checked log file/color?
       var config = {};
-      var LogFileArr = [];
+      var LogFileArr = [];      
+      var tmpRgbArr = [];
       for (var i = 1; i <= iCnt; i++) {
         var docVal = $("#tb" + i).val();
         if (docVal != "") {
           LogFileArr.push(docVal);
+          var tmpID = idArr[i-1];
+          var backgroundCss = $(`#${tmpID}_CP`).css('background');
+          var rgb = getRGBfromString(backgroundCss);
+          tmpRgbArr.push(rgb);
         }
       }
 
       config.LogFileArr = LogFileArr;
+      config.rgbArr = tmpRgbArr;
+
       config.dateRegex = $("#dateRegex").val();
       config.dateFormat = $("#dateFormat").val();
       config.logRegexFormat = $("#logRegexFormat").val();
       config.logLevelRegexFormat = $("#logLevelRegexFormat").val();
       config.checkedLogLevel = checkedLogLevel;
-
+      
       config.textFilter = textFilter;
       config.textIncluded = textIncluded;
-
+      
+      
 
       return JSON.stringify(config);
     }
 
     function LoadConfig(jsonString) {
-      logArr = [];
+      logArr=[];
+      idArr.length=1;
+      checkedLogFile.length=1;
       try {
         var config = JSON.parse(jsonString);
       } catch (err) {
@@ -115,7 +134,11 @@
       }
       config.LogFileArr.forEach(function (x, index) {
         $("#tb" + (index + 1)).val(x);
+        var tmpID = idArr[index];
+        setCPColorAndUpdate(tmpID,config.rgbArr[index]);
       });
+      
+
 
       UnselectAllbtnOnClick();
       config.checkedLogLevel.forEach(x => {
@@ -250,6 +273,16 @@
     }
 
     $(function () {
+
+      rgbArr.push(new rgb(179, 183, 186));
+      rgbArr.push(new rgb(69, 189, 224));
+      rgbArr.push(new rgb(83, 209, 114));
+      rgbArr.push(new rgb(231, 114, 84));
+      rgbArr.push(new rgb(229, 196, 83));
+      rgbArr.push(new rgb(233, 80, 101));
+      rgbArr.push(new rgb(255, 255, 255));
+
+
       if ((window && window.process && window.process.type) != undefined) {
         RunningInElectron = true;
       }
@@ -273,7 +306,8 @@
           iCnt = iCnt + 1;
           var tmpId = getId();
           idArr.push(tmpId);
-          var tmpCp = $(document.createElement('div')).css({ margin: '5px', width: '30px', height: '30px', background: 'url(./images/select.png) center rgb(173,173,173)' });
+          var rgbString = rgbToString(getNewColor());
+          var tmpCp = $(document.createElement('div')).css({ margin: '5px', width: '30px', height: '30px', background: 'url(./images/select.png) center ' + rgbString });
           var cpId = tmpId + "_" + "CP";
           tmpCp.attr('id', cpId);
           tmpCp.ColorPicker({
@@ -300,6 +334,8 @@
           var firstChild = $(`#div${iCnt} :first-child`);
           tmpCp.insertAfter(firstChild);
           $('#links').append(container);
+
+
         }
         else {
           $('#btAdd').attr('class', 'bt-disable');
@@ -321,14 +357,39 @@
 
         //Update ICntValue Text
         $("#ICntValue").text(iCnt);
+        //TODO looking for pure css function..
+        $(".colorpicker").hover(function () {
+          $(".ControlPanelContent").css('transition', 'transition: opacity .5s ease-out');
+          $(".ControlPanelContent").css('opacity', '1');
+        }, function () {
+          $(".ControlPanelContent").css('transition', 'opacity .5s ease-out');
+          $(".ControlPanelContent").css('opacity', '0.5');
+        });
+
+
 
       });
       // REMOVE ONE ELEMENT PER CLICK.
       $('#btRemove').click(function () {
         if (iCnt != 1) {
+
+          //Remove it from id array
+          var tmpId = $('#tbid' + iCnt).val();
+
+          checkedLogFile = checkedLogFile.filter(function (obj) {
+            return obj !== tmpId;
+          });
+          idArr = idArr.filter(function (obj) {
+            return obj !== tmpId;
+          });
+
+          logArr = logArr.filter(function (obj) {
+            return obj.id !== tmpId;
+          });
+
           $('#div' + iCnt).remove();
+
           iCnt = iCnt - 1;
-          idArr.splice(-1, 1);
         }
         //Resume button state
         if (iCnt < MAX_LOG_FILE) {
@@ -336,6 +397,8 @@
           $('#btAdd').removeAttr('disabled');
         }
         $("#ICntValue").text(iCnt);
+
+        updateLogAreaWithFilter();
       });
       $('#btAdd').click();
 
@@ -366,6 +429,7 @@
       });
       $("#jsonFile").change(function (evt) {
 
+
         try {
           var files = evt.target.files; // FileList object				
           var file = files[0];
@@ -381,17 +445,11 @@
           alert("Could not load file." + err);
           return;
         }
+
       }
       );
 
-      //TODO looking for pure css function..
-      $(".colorpicker").hover(function () {
-        $(".ControlPanelContent").css('transition', 'transition: opacity .5s ease-out');
-        $(".ControlPanelContent").css('opacity', '1');
-      }, function () {
-        $(".ControlPanelContent").css('transition', 'opacity .5s ease-out');
-        $(".ControlPanelContent").css('opacity', '0.5');
-      });
+
 
       $(".ControlPanelContent").hover(function () {
         $(this).css('transition', 'transition: opacity .5s ease-out');
@@ -423,7 +481,7 @@
             LoadConfig(configJson);
           });
         }
-       
+
         // Retrieve the electron in page search module
         const searchInPage = require('electron-in-page-search').default;
         const remote = require('electron').remote;
@@ -448,6 +506,51 @@
       }
 
     });
+
+    function getNewColor() {
+      var resultColor = rgbArr[Math.floor(Math.random() * rgbArr.length)];
+      if (oldColor != null) {
+        do {
+          resultColor = rgbArr[Math.floor(Math.random() * rgbArr.length)];
+        } while (resultColor == oldColor)
+      }
+      oldColor = resultColor;
+
+      return resultColor;
+    }
+
+    function rgbToString(rgb) {
+      var rgbString = `rgb(${rgb.r},${rgb.g},${rgb.b})`;
+      return rgbString;
+    }
+
+    function setCPColorAndUpdate(id, rgb) {
+      var tmpCp = $("#" + id + "_CP");
+      var colorPickerCss = tmpCp.css("background");
+      var rgbString = rgbToString(rgb);
+      //updateColorPicker background css and perform update on fonts.
+      var newCss = colorPickerCss.replace(/rgb\(.*?\)/gm, rgbString);
+      tmpCp.css('background', newCss);
+      $(`.${id}`).css('color', rgbToHex(rgb));
+    }
+
+    function getRGBfromString(str) {
+      var match = str.match(/rgba?\((\d{1,3}), ?(\d{1,3}), ?(\d{1,3})\)?(?:, ?(\d(?:\.\d?))\))?/);
+      return new rgb ? {
+        r: match[1],
+        g: match[2],
+        b: match[3]
+      } : {};
+    }
+
+    function componentToHex(c) {
+      var hex = c.toString(16);
+      return hex.length == 1 ? "0" + hex : hex;
+    }
+
+    function rgbToHex(rgb) {
+      return "#" + componentToHex(rgb.r) + componentToHex(rgb.g) + componentToHex(rgb.b);
+    }
 
     function initLogLevel() {
       LOG_LEVELS.forEach(element => {
@@ -522,7 +625,7 @@
         var docVal = $("#tb" + i).val();
         var id = $("#tbid" + i).val();
         var cbChecked = $(`#div${i} input`).first().prop('checked');
-        if (docVal == ""||!cbChecked) {
+        if (docVal == "" || !cbChecked) {
           continue
         }
         var tmpTimerName = "Read " + docVal;

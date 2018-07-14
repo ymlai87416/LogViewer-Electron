@@ -18,7 +18,7 @@ body {
 }
 body {
     font-family: Arial, Helvetica, sans-serif;
-    background: black;
+    background: rgba(20,20,20,1);
 }
 .logLevelDiv>span {
     display: inline-block;
@@ -168,6 +168,7 @@ pre{
 /* width */
 ::-webkit-scrollbar {
     width: 10px;
+    height: 10px;
 }
 /* Track */
 ::-webkit-scrollbar-track {

@@ -1,6 +1,9 @@
 <html>
 <!--TODO line number/seperate between files?-->
 <!--TODO 自動reload&Resume去原先個位? Blink新加果行? -->
+<!--TODO auto gen color-->
+<!--TODO select by folder-->
+
 
 <head>
   <meta charset="UTF-8">
@@ -29,7 +32,7 @@
     var MAX_LOG_FILE = 10;
     var rgbArr = [];
     var LOG_LEVELS = ["ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "WARN"];
-    function readTextFile(file, id) {
+    function readTextFile(file, id, index) {
       return new Promise(function (resolve, reject) {
         console.time("XMLHttpRequest: " + file);
         var rawFile = new XMLHttpRequest();
@@ -39,7 +42,7 @@
             console.timeEnd("XMLHttpRequest: " + file);
             if (rawFile.status === 200 || rawFile.status == 0) {
               var allText = rawFile.responseText;
-              resolve({ allText: allText, file: file, id: id });
+              resolve({ allText: allText, file: file, id: id, index: index });
             }
             if (rawFile.status !== 200) {
               var errorMsg = 'URL: ' + rawFile.responseURL + '\nStatus code: ' + rawFile.status + '\nMessage: ' + rawFile.statusText;
@@ -61,13 +64,13 @@
         }
       });
     }
-    function log(datetime, content, url, id, logLevel) {
+    function log(datetime, content, url, id, logLevel, index) {
       this.datetime = datetime;
       this.content = content;
       this.url = url;
       this.id = id;
       this.logLevel = logLevel;
-
+      this.index = index; //Logfile index on UI
     }
 
     function rgb(r, g, b) {
@@ -79,13 +82,13 @@
     function GetConfigurationJson() {
       //TODO store checked log file/color?
       var config = {};
-      var LogFileArr = [];      
+      var LogFileArr = [];
       var tmpRgbArr = [];
       for (var i = 1; i <= iCnt; i++) {
         var docVal = $("#tb" + i).val();
         if (docVal != "") {
           LogFileArr.push(docVal);
-          var tmpID = idArr[i-1];
+          var tmpID = idArr[i - 1];
           var backgroundCss = $(`#${tmpID}_CP`).css('background');
           var rgb = getRGBfromString(backgroundCss);
           tmpRgbArr.push(rgb);
@@ -100,19 +103,19 @@
       config.logRegexFormat = $("#logRegexFormat").val();
       config.logLevelRegexFormat = $("#logLevelRegexFormat").val();
       config.checkedLogLevel = checkedLogLevel;
-      
+
       config.textFilter = textFilter;
       config.textIncluded = textIncluded;
-      
-      
+
+
 
       return JSON.stringify(config);
     }
 
     function LoadConfig(jsonString) {
-      logArr=[];
-      idArr.length=1;
-      checkedLogFile.length=1;
+      logArr = [];
+      idArr.length = 1;
+      checkedLogFile.length = 1;
       try {
         var config = JSON.parse(jsonString);
       } catch (err) {
@@ -135,9 +138,9 @@
       config.LogFileArr.forEach(function (x, index) {
         $("#tb" + (index + 1)).val(x);
         var tmpID = idArr[index];
-        setCPColorAndUpdate(tmpID,config.rgbArr[index]);
+        setCPColorAndUpdate(tmpID, config.rgbArr[index]);
       });
-      
+
 
 
       UnselectAllbtnOnClick();
@@ -165,10 +168,13 @@
     function sortlogArrByDatetime(a, b) {
       var aDate = a.datetime;
       var bDate = b.datetime;
+      if (aDate.isSame(bDate)) {
+        return ((a.index < b.index) ? -1 : ((a.index > b.index) ? 1 : 0));
+      }
       return ((aDate < bDate) ? -1 : ((aDate > bDate) ? 1 : 0));
     }
     function appendText(content, className) {
-      return (`<pre class="${className} logRow" style="display:block;">` + content + "</pre>")
+      return (`<li><pre class="${className} logRow" style="display:block;">` + content + "</pre></li>")
     }
     function AddTextFilter(input, updateLog) {
 
@@ -242,28 +248,6 @@
           }
         })
 
-        // Retrieve the electron in page search module
-        const searchInPage = require('electron-in-page-search').default;
-        const remote = require('electron').remote;
-        // or
-        // import searchInPage from 'electron-in-page-search';
-
-        // Create an instance with the current window
-        const inPageSearch = searchInPage(remote.getCurrentWebContents());
-
-        // Attach an event listener to open the search menu
-        document.getElementById('trigger-search').addEventListener('click', () => {
-          inPageSearch.openSearchWindow();
-        });
-
-        // Alternatively add the key event listener [CTRL+F]
-        window.addEventListener("keydown", (e) => {
-          if ((e.ctrlKey || e.metaKey) && e.keyCode === 70) {
-            inPageSearch.openSearchWindow();
-          }
-        }, false);
-
-
       } else {
         var input = prompt("Enter config json below:");
         if (input != null) {
@@ -272,15 +256,35 @@
       }
     }
 
+
+    function getStyle(className) {
+      //[1] is default.css
+      var classes = document.styleSheets[1].cssRules;
+      for (var x = 0; x < classes.length; x++) {
+        if (classes[x].selectorText == className) {
+          return classes[x];
+        }
+      }
+    }
+
     $(function () {
 
-      rgbArr.push(new rgb(179, 183, 186));
-      rgbArr.push(new rgb(69, 189, 224));
-      rgbArr.push(new rgb(83, 209, 114));
-      rgbArr.push(new rgb(231, 114, 84));
-      rgbArr.push(new rgb(229, 196, 83));
-      rgbArr.push(new rgb(233, 80, 101));
-      rgbArr.push(new rgb(255, 255, 255));
+      //TODO tOMG this is so 7
+      //http://colorsafe.co
+      rgbArr.push(new rgb(74, 224, 140));
+      rgbArr.push(new rgb(0, 250, 154));
+
+      rgbArr.push(new rgb(107, 185, 240));
+      rgbArr.push(new rgb(0, 255, 255));
+
+      rgbArr.push(new rgb(174, 168, 211));
+      rgbArr.push(new rgb(220, 198, 224));
+
+      rgbArr.push(new rgb(217, 179, 0));
+      rgbArr.push(new rgb(242, 121, 39));
+
+      rgbArr.push(new rgb(255, 99, 71));
+      rgbArr.push(new rgb(231, 76, 60));
 
 
       if ((window && window.process && window.process.type) != undefined) {
@@ -328,7 +332,7 @@
           var part1 = `<div style="padding:5px;display:flex;align-items:center;" id="div${iCnt}"> <input type='checkbox' onchange="checkboxOnChange(this,'${tmpId}')" checked/> `;
           //init checkedLogFile
           checkedLogFile.push(tmpId);
-          var part2 = `Log file ${iCnt}: <input type=text class="input" id="tb${iCnt}" style="width:370px" > <input id="tbid${iCnt}" type="hidden" value="${tmpId}"/></div>`;
+          var part2 = `<span>Log file ${iCnt}: </span><input type=text class="input" id="tb${iCnt}" style="width:370px" > <input id="tbid${iCnt}" type="hidden" value="${tmpId}"/></div>`;
           container.append(part1 + part2);
           $('#links').append(container);
           var firstChild = $(`#div${iCnt} :first-child`);
@@ -337,32 +341,20 @@
 
 
         }
-        else {
+        if(iCnt == MAX_LOG_FILE) {
           $('#btAdd').attr('class', 'bt-disable');
           $('#btAdd').attr('disabled', 'disabled');
         }
-        $(".cb_logLevel").each(function () {
-          $(this).change(function () {
-            var isChecked = $(this).prop("checked");
-            if (isChecked) {
-              checkedLogLevel.push(this.value);
-            } else//Remove it from array
-            {
-              var index = checkedLogLevel.indexOf(this.value);
-              if (index !== -1) checkedLogLevel.splice(index, 1);
-            }
-            updateLogAreaWithFilter();
-          });
-        });
+
 
         //Update ICntValue Text
         $("#ICntValue").text(iCnt);
         //TODO looking for pure css function..
         $(".colorpicker").hover(function () {
-          $(".ControlPanelContent").css('transition', 'transition: opacity .5s ease-out');
+          $(".ControlPanelContent").css('transition', 'transition: opacity .2s ease-out');
           $(".ControlPanelContent").css('opacity', '1');
         }, function () {
-          $(".ControlPanelContent").css('transition', 'opacity .5s ease-out');
+          $(".ControlPanelContent").css('transition', 'opacity .2s ease-out');
           $(".ControlPanelContent").css('opacity', '0.5');
         });
 
@@ -389,7 +381,12 @@
 
           $('#div' + iCnt).remove();
 
+          //Remove color picker
+          $(".colorpicker:last-child").remove();
+
+
           iCnt = iCnt - 1;
+          updateLogAreaWithFilter();
         }
         //Resume button state
         if (iCnt < MAX_LOG_FILE) {
@@ -398,7 +395,7 @@
         }
         $("#ICntValue").text(iCnt);
 
-        updateLogAreaWithFilter();
+
       });
       $('#btAdd').click();
 
@@ -406,6 +403,21 @@
         var input = $("#includeInput").val();
         AddTextInclude(input, true);
       });
+
+      $(".cb_logLevel").each(function () {
+        $(this).change(function () {
+          var isChecked = $(this).prop("checked");
+          if (isChecked) {
+            checkedLogLevel.push(this.value);
+          } else//Remove it from array
+          {
+            var index = checkedLogLevel.indexOf(this.value);
+            if (index !== -1) checkedLogLevel.splice(index, 1);
+          }
+          updateLogAreaWithFilter();
+        });
+      });
+
 
       $('#AddTextFilterBtn').click(function () {
         var input = $("#filterInput").val();
@@ -427,6 +439,9 @@
       $('#FileLoadConfigBtn').click(function () {
         $("#jsonFile").click();
       });
+
+
+
       $("#jsonFile").change(function (evt) {
 
 
@@ -452,18 +467,18 @@
 
 
       $(".ControlPanelContent").hover(function () {
-        $(this).css('transition', 'transition: opacity .5s ease-out');
+        $(this).css('transition', 'transition: opacity .2s ease-out');
         $(this).css('opacity', '1');
       }, function () {
-        $(this).css('transition', 'opacity .5s ease-out');
+        $(this).css('transition', 'opacity .2s ease-out');
         $(this).css('opacity', '0.5');
       });
 
       $("#MenuBtn").hover(function () {
-        $(".ControlPanelContent").css('transition', 'transition: opacity .5s ease-out');
+        $(".ControlPanelContent").css('transition', 'transition: opacity .2s ease-out');
         $(".ControlPanelContent").css('opacity', '1');
       }, function () {
-        $(".ControlPanelContent").css('transition', 'opacity .5s ease-out');
+        $(".ControlPanelContent").css('transition', 'opacity .2s ease-out');
         $(".ControlPanelContent").css('opacity', '0.5');
       });
       //Electron init..
@@ -507,14 +522,46 @@
 
     });
 
+    function getTextWidth(text, font) {
+      // re-use canvas object for better performance
+      var canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
+      var context = canvas.getContext("2d");
+      context.font = font;
+      var metrics = context.measureText(text);
+      return metrics.width;
+    }
+
+
+
     function getNewColor() {
+
+      var existingRGBArr = []
+      idArr.forEach(function (value) {
+        var rgbString = $("#" + value + "_CP").css("background");
+        if (rgbString != null) {
+          var rgb = getRGBfromString(rgbString);
+          existingRGBArr.push(rgb);
+        }
+      });
+
       var resultColor = rgbArr[Math.floor(Math.random() * rgbArr.length)];
-      if (oldColor != null) {
-        do {
-          resultColor = rgbArr[Math.floor(Math.random() * rgbArr.length)];
-        } while (resultColor == oldColor)
+
+      var isNewColor = false;
+
+      while (!isNewColor) {
+        var matchColorFound = false;
+        for (var i = 0; i < existingRGBArr.length; i++) {
+          var tmp = existingRGBArr[i];
+          if (resultColor.r == tmp.r && resultColor.g == tmp.g && resultColor.b == tmp.b) {
+            matchColorFound = true;
+            resultColor = rgbArr[Math.floor(Math.random() * rgbArr.length)];
+            break;
+          }
+        }
+        if (!matchColorFound) {
+          isNewColor = true;
+        }
       }
-      oldColor = resultColor;
 
       return resultColor;
     }
@@ -601,8 +648,34 @@
       resultArray.forEach(function (val) {
         $('#LogArea').append(appendText(val.content, val.id));
       });
-      //TODO work around for selecting last line
+      //FIX work around for selecting last line
       $('#LogArea').append(appendText("&zwnj;", "noselect"));
+
+
+      //FIX put it a better way?
+      $('pre').click(function () {
+        var className = "ClickHighLightedBackground";
+        if ($(this).hasClass(className)) {
+          $(this).removeClass(className);
+        }
+        else {
+          $("pre").removeClass(className);
+          $(this).addClass(className)
+        }
+      });
+
+
+      $("pre").hover(function () {
+        var className = "highLightedBackground";
+        if (!$(this).hasClass(className)) {
+          $(this).addClass(className)
+        }
+      }, function () {
+        var className = "highLightedBackground";
+        $(this).removeClass(className);
+      });
+
+
 
       for (var i = 0; i < idArr.length; i++) {
         //Get color picker value
@@ -612,6 +685,21 @@
         $('.' + idArr[i]).css("color", rgbStr[0]);
       }
       console.timeEnd("updateLogAreaWithFilter");
+
+
+      //update line number width
+
+      //get largest number width
+      try{
+      var maxWidth = window.getComputedStyle(document.querySelector('li:nth-last-child(2)'), ':before').getPropertyValue('width');
+      var liStyle = getStyle("li::before");
+      liStyle.style["width"] = maxWidth;
+      }catch(err)
+      {
+        console.log(err);
+      }
+
+
       $("#NumOfLog").text(resultArray.length);
     }
     function gogogo() {
@@ -631,7 +719,7 @@
         var tmpTimerName = "Read " + docVal;
 
         console.time(tmpTimerName);
-        var promise = readTextFile(docVal, id).then(function ({ allText, file, id }) {
+        var promise = readTextFile(docVal, id, i).then(function ({ allText, file, id, index }) {
           //TODO seek for a better one
           var logRegexFormat = $("#logRegexFormat").val();
           var myRegex = new RegExp(logRegexFormat, "gm");
@@ -650,7 +738,7 @@
               var logLevelRegexFormat = $("#logLevelRegexFormat").val();
               var logLevelRegex = new RegExp(logLevelRegexFormat, "gm");
               var logLevel = logLevelRegex.exec(arr[i])[1];
-              logArr.push(new log(date, arr[i], file, id, logLevel));
+              logArr.push(new log(date, arr[i], file, id, logLevel, index));
             } catch (err) {
               console.log(err);
             }
@@ -852,8 +940,10 @@
       </div>
     </div>
   </div>
-  <div id="LogArea" style="height: 97%;overflow: auto;"></div>
-</body>
+  <div style="height: 97%;overflow: auto;">
+    <ol id="LogArea"></ol>
 
+  </div>
+</body>
 
 </html>

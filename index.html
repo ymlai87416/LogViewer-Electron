@@ -174,10 +174,16 @@
       return ((aDate < bDate) ? -1 : ((aDate > bDate) ? 1 : 0));
     }
     function appendText(content, className) {
-      return (`<li><pre class="${className} logRow" style="display:block;">` + content + "</pre></li>")
+        var li = document.createElement("li");
+        li.className = "logLi";
+        var pre = document.createElement("pre");
+        pre.className = `${className} logRow`;
+        pre.style = "display:block;";
+        pre.innerHTML = content;
+        li.appendChild(pre);        
+      return li;
     }
     function AddTextFilter(input, updateLog) {
-
       if (input != "") {
         textFilter.push(input);
         $("#filterInput").val("");
@@ -645,13 +651,32 @@
         }
         resultArray.push(val);
       });
-      resultArray.forEach(function (val) {
-        $('#LogArea').append(appendText(val.content, val.id));
-      });
+      
+      
+     
+      
+      
+      
+      $("#LogArea").empty();
+      console.time("forLoop");
+      var fragment = document.createDocumentFragment();
+      
+      for(var i =0 ;i<resultArray.length;i++)
+      {
+          var val = resultArray[i];
+           fragment.appendChild(appendText(val.content, val.id));
+      }            
+      document.getElementById("LogArea").appendChild(fragment);
+      console.timeEnd("forLoop");
+      
+      
+   
+      
+      
+      
+      
       //FIX work around for selecting last line
       $('#LogArea').append(appendText("&zwnj;", "noselect"));
-
-
       //FIX put it a better way?
       $('pre').click(function () {
         var className = "ClickHighLightedBackground";
@@ -809,7 +834,7 @@
     </div>
 
   </div>
-  <div id="ControlPanel" class="ControlPanel noselect">
+  <div id="ControlPanel" class="ControlPanel noselect" style="z-index:99;">
     <button id="MenuBtn" style="position: absolute;left: -50px;height: 35px;width: 35px;font-size: 20px;" onclick="OpenMenu()">≡</button>
     <div class="ControlPanelContent">
       <div class="regexForm settingSection">
@@ -940,7 +965,7 @@
       </div>
     </div>
   </div>
-  <div style="height: 97%;overflow: auto;">
+  <div style="height: 97%;overflow: auto;will-change:transform;">
     <ol id="LogArea"></ol>
 
   </div>

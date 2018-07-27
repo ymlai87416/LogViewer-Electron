@@ -23,10 +23,70 @@ body {
     background: rgb(58,58,58);
 }
 
+#links
+{
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+
+#MenuBtn
+{
+    position: absolute;
+    left: -50px;
+    height: 30px;
+    width: 30px;
+    font-size: 20px;
+}
+
+#GogogoBtn
+{
+    color: #F1F1F1;
+    background-color: #5cb85c;
+    border-color: #4cae4c;
+    display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.42857143;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+#GogogoBtn:hover
+{
+    background-color: #3e8e41;
+}
+
 .logRow {
+    min-width:100%;
+    width:auto;
+	margin-left: 10px;
+
+	float:left;
+}
+
+.logDivContainer
+{
+    float:left;
+    width:100%;
     padding-top: 2px;
     padding-bottom: 2px;
+    min-height: 19px;
 }
+
 body {
     font-family: Arial, Helvetica, sans-serif;
     background: rgba(20,20,20,1);
@@ -69,6 +129,7 @@ body {
     background: gainsboro;
     padding: 15px;
     border-radius: 5px;
+    font-size: 14px;
 }
 /* .ControlPanelContent:hover {
     opacity: 1;
@@ -94,11 +155,14 @@ div .column button {
     margin-bottom: 5px;
 }
 
-pre{
-    margin-left: 10px;
+.logRow pre{
     margin-top:0px;
-    margin-bottom:0px;
-    width: 100%;
+    margin-bottom:0px;   
+    min-width: 100%;
+    font-size: 14px;
+    line-height: 19px;
+    width: auto;
+    font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
 }
 
 .loader {
@@ -141,6 +205,8 @@ pre{
     user-select: none;
    /* Non-prefixed version, currently supported by Chrome and Opera */
 }
+
+
 /*Always show vertical scroll bar*/
 #title-bar {
     -webkit-app-region: drag;
@@ -187,8 +253,8 @@ pre{
 }
 /* width */
 ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 15px;
+    height: 15px;
 }
 /* Track */
 ::-webkit-scrollbar-track {
@@ -244,24 +310,16 @@ pre{
     margin-left: auto;
     text-align: right;    
   } */
-  ol { 
-    counter-reset: item;
-    list-style-type: none;
-    padding-left: 10px
-}
 
-li {
-  display: -webkit-box;
-}
-
-li:before { 
-    content: counter(item) "  "; 
-    counter-increment: item ;
+.lineNum{    
     color: gray;
-    display: block;
+    float: left;
     text-align: right;
     font-size:14px;
-}
-li:last-child:before {
-    content: "";
+    position:fixed;
+    margin-left:10px;
+    pointer-events: none;
+    line-height: 19px;
+    min-height: inherit;
+    font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
 }

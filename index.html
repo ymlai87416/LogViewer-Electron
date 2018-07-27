@@ -19,19 +19,39 @@
   <script src="./js/colorpicker.js"></script>
   <script>if (window.module) module = window.module;</script>
   <script>
-    var RunningInElectron = false;
-    var oldColor;
+    //Remember to escape character here.
+    var DEFAULT_DATE_REGEX = "[\\S]+\\s+[\\S]+";
+    var DEFAULT_DATE_FORMAT = "YYYY-MM-DD hh:mm:ss"; 
+    var DEFAULT_LOG_REGEX_FORMAT = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}[\\s\\S]+?((?=^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}|$)(?!\\n|\\s))";
+    var DEFAULT_LOG_LEVEL_REGEX_FORMAT = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\S*\\s([\\S]+)";
+
+
+    var RunningInElectron = false;        
     var Dialogs = require('dialogs');
+    //index of how many log file row
     var iCnt = 0;
+    //Array that stores all LOADED log
     var logArr = [];
+    //Array that stores generated ID in order
     var idArr = [];
+    //Array that stores checked Log level    
     var checkedLogLevel = [];
+    //Array that stores checked log file(in ID)
     var checkedLogFile = [];
+
     var textFilter = [];
+
     var textIncluded = [];
+
     var MAX_LOG_FILE = 10;
+
     var rgbArr = [];
+
     var LOG_LEVELS = ["ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "WARN"];
+
+
+
+
     function readTextFile(file, id, index) {
       return new Promise(function (resolve, reject) {
         console.time("XMLHttpRequest: " + file);
@@ -173,15 +193,30 @@
       }
       return ((aDate < bDate) ? -1 : ((aDate > bDate) ? 1 : 0));
     }
-    function appendText(content, className) {
-        var li = document.createElement("li");
-        li.className = "logLi";
-        var pre = document.createElement("pre");
-        pre.className = `${className} logRow`;
-        pre.style = "display:block;";
-        pre.innerHTML = content;
-        li.appendChild(pre);        
-      return li;
+    function appendText(content, className, lineNumber) {
+      // var li = document.createElement("li");
+      // li.className = "logLi";
+      // var pre = document.createElement("pre");
+      // pre.className = `${className} logRow`;
+      // pre.style = "display:block;";
+      // pre.innerHTML = content;
+      // li.appendChild(pre);		
+      //return li;
+      var outerDiv = document.createElement("div");
+      outerDiv.className = "logDivContainer";
+      var lineNumDiv = document.createElement("div");
+      lineNumDiv.innerText = lineNumber;
+      lineNumDiv.className = "noselect lineNum";
+      outerDiv.appendChild(lineNumDiv);
+
+      var textDiv = document.createElement("div");
+      var pre = document.createElement("pre");
+      textDiv.className = `${className} logRow`;
+      pre.innerHTML = content;
+
+      textDiv.appendChild(pre);
+      outerDiv.appendChild(textDiv);
+      return outerDiv;
     }
     function AddTextFilter(input, updateLog) {
       if (input != "") {
@@ -273,44 +308,53 @@
       }
     }
 
+
+
     $(function () {
 
-      //TODO tOMG this is so 7
+
+
+
+
+
+
+
+
+      //Init default value
+      $("#dateRegex").val(DEFAULT_DATE_REGEX);
+      $("#dateFormat").val(DEFAULT_DATE_FORMAT);
+      $("#logRegexFormat").val(DEFAULT_LOG_REGEX_FORMAT);
+      $("#logLevelRegexFormat").val(DEFAULT_LOG_LEVEL_REGEX_FORMAT);
+
+
+
+      //TODO OMG this is so 7
       //http://colorsafe.co
       rgbArr.push(new rgb(74, 224, 140));
       rgbArr.push(new rgb(0, 250, 154));
-
       rgbArr.push(new rgb(107, 185, 240));
       rgbArr.push(new rgb(0, 255, 255));
-
       rgbArr.push(new rgb(174, 168, 211));
       rgbArr.push(new rgb(220, 198, 224));
-
       rgbArr.push(new rgb(217, 179, 0));
       rgbArr.push(new rgb(242, 121, 39));
-
       rgbArr.push(new rgb(255, 99, 71));
       rgbArr.push(new rgb(231, 76, 60));
-
-
       if ((window && window.process && window.process.type) != undefined) {
         RunningInElectron = true;
       }
       initLogLevel();
-
       $("#MAX_LOG_COUNT").text(MAX_LOG_FILE);
-
       $(".settingSection").accordion({
         collapsible: true,
         heightStyle: "content",
         active: 2
       });
-
       $("#logFiles").accordion('option', 'active', 0);
-
       //init logLevelArray
       checkedLogLevel = LOG_LEVELS;
       var container = $(document.createElement('div'));
+      container.className = "LogFileContainer";
       $('#btAdd').click(function () {
         if (iCnt < MAX_LOG_FILE) {
           iCnt = iCnt + 1;
@@ -344,15 +388,11 @@
           var firstChild = $(`#div${iCnt} :first-child`);
           tmpCp.insertAfter(firstChild);
           $('#links').append(container);
-
-
         }
-        if(iCnt == MAX_LOG_FILE) {
+        if (iCnt == MAX_LOG_FILE) {
           $('#btAdd').attr('class', 'bt-disable');
           $('#btAdd').attr('disabled', 'disabled');
         }
-
-
         //Update ICntValue Text
         $("#ICntValue").text(iCnt);
         //TODO looking for pure css function..
@@ -630,6 +670,7 @@
       updateLogAreaWithFilter();
     }
     function updateLogAreaWithFilter() {
+      $(".loader").css("visibility", "visible");
       console.time("updateLogAreaWithFilter");
       $("#LogArea").empty();
       var resultArray = [];
@@ -651,46 +692,32 @@
         }
         resultArray.push(val);
       });
-      
-      
-     
-      
-      
-      
+
       $("#LogArea").empty();
-      console.time("forLoop");
+      console.time("forLoop appendText");
       var fragment = document.createDocumentFragment();
-      
-      for(var i =0 ;i<resultArray.length;i++)
-      {
-          var val = resultArray[i];
-           fragment.appendChild(appendText(val.content, val.id));
-      }            
+      var lineNumber = 1;
+      for (var i = 0; i < resultArray.length; i++) {
+        var val = resultArray[i];
+        fragment.appendChild(appendText(val.content, val.id, lineNumber++));
+      }
       document.getElementById("LogArea").appendChild(fragment);
-      console.timeEnd("forLoop");
-      
-      
-   
-      
-      
-      
-      
+      console.timeEnd("forLoop appendText");
+
       //FIX work around for selecting last line
-      $('#LogArea').append(appendText("&zwnj;", "noselect"));
+      $('#LogArea').append(appendText("&zwnj;", "noselect", ""));
       //FIX put it a better way?
-      $('pre').click(function () {
+      $('.logRow').click(function () {
         var className = "ClickHighLightedBackground";
         if ($(this).hasClass(className)) {
           $(this).removeClass(className);
         }
         else {
-          $("pre").removeClass(className);
+          $(".logRow").removeClass(className);
           $(this).addClass(className)
         }
       });
-
-
-      $("pre").hover(function () {
+      $(".logRow").hover(function () {
         var className = "highLightedBackground";
         if (!$(this).hasClass(className)) {
           $(this).addClass(className)
@@ -710,22 +737,21 @@
         $('.' + idArr[i]).css("color", rgbStr[0]);
       }
       console.timeEnd("updateLogAreaWithFilter");
-
-
-      //update line number width
-
-      //get largest number width
-      try{
-      var maxWidth = window.getComputedStyle(document.querySelector('li:nth-last-child(2)'), ':before').getPropertyValue('width');
-      var liStyle = getStyle("li::before");
-      liStyle.style["width"] = maxWidth;
-      }catch(err)
-      {
+      //update line number width      
+      try {
+        var lineNumArr = document.getElementsByClassName("lineNum");
+        //get largest number width
+        var lastLineNum = lineNumArr[lineNumArr.length - 2];
+        var maxWidth = window.getComputedStyle(lastLineNum).getPropertyValue('width');
+        //20 is hardcoded margin.
+        var updatedMargin = parseFloat(maxWidth.replace('\px', "")) + 20;
+        $(".logRow").css('margin-left', updatedMargin + "px");
+        $('.lineNum').css('width', maxWidth);
+      } catch (err) {
         console.log(err);
       }
-
-
       $("#NumOfLog").text(resultArray.length);
+      $(".loader").css("visibility", "hidden");
     }
     function gogogo() {
       $(".loader").css("visibility", "visible");
@@ -773,23 +799,19 @@
         promises.push(promise);
       }
       Promise.all(promises).then(function () {
-
         console.timeEnd("(ALL)readTextFile");
-
         console.time("logArr sort");
         logArr.sort(sortlogArrByDatetime);
         console.timeEnd("logArr sort");
-
         updateLogAreaWithFilter();
-
         console.timeEnd("gogogo");
-
         $(".loader").css("visibility", "hidden");
-
+        if ($("#NumOfLog").text == 0) {
+          alert("0 rows returned!");
+        }
       }, function () {//on error         
         $(".loader").css("visibility", "hidden");
       });
-
     }
     function SelectAllbtnOnClick() {
       $(".cb_logLevel").each(function () {
@@ -835,23 +857,22 @@
 
   </div>
   <div id="ControlPanel" class="ControlPanel noselect" style="z-index:99;">
-    <button id="MenuBtn" style="position: absolute;left: -50px;height: 35px;width: 35px;font-size: 20px;" onclick="OpenMenu()">≡</button>
+    <button id="MenuBtn" onclick="OpenMenu()">≡</button>
     <div class="ControlPanelContent">
       <div class="regexForm settingSection">
         <h3>Regex Settings</h3>
         <div>
           <label>Regex for date:</label>
-          <input id="dateRegex" value="[\S]+\s+[\S]+" />
+          <input id="dateRegex"/>
 
           <label>Datetime format:</label>
-          <input id="dateFormat" value="YYYY-MM-DD hh:mm:ss" />
+          <input id="dateFormat"/>
 
           <label>Log Regex format:</label>
-          <input id="logRegexFormat" value="^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}[\s\S]+?((?=^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}|$)(?!\n|\s))"
-          />
+          <input id="logRegexFormat"/>
 
           <label>Loglevel Regex format:</label>
-          <input id="logLevelRegexFormat" value="^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\S*\s([\S]+)" />
+          <input id="logLevelRegexFormat"/>
         </div>
       </div>
       <hr>
@@ -955,8 +976,8 @@
         </div>
       </div>
       <hr>
-      <div class="finalRow">
-        <button onclick="gogogo()"> Go Go Go~ </button>
+      <div class="finalRow">          
+        <button id="GogogoBtn" onclick="gogogo()"> Go Go Go</button>
         <span id="Timer"></span>
         <div class="loader" style="display: inline-block;vertical-align: middle;visibility: hidden;"></div>
         <span>Number of log row: </span>
@@ -965,8 +986,8 @@
       </div>
     </div>
   </div>
-  <div style="height: 97%;overflow: auto;will-change:transform;">
-    <ol id="LogArea"></ol>
+  <div style="height: 97%;overflow: auto;will-change:transform;" id="LogArea">
+
 
   </div>
 </body>

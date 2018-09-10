@@ -1,0 +1,995 @@
+<html>
+<!--TODO line number/seperate between files?-->
+<!--TODO 自動reload&Resume去原先個位? Blink新加果行? -->
+<!--TODO auto gen color-->
+<!--TODO select by folder-->
+
+
+<head>
+  <meta charset="UTF-8">
+  <script>if (typeof module === 'object') { window.module = module; module = undefined; }</script>
+  <script src="./js/jquery-3.3.1.min.js"></script>
+  <script src="./js/moment.js"></script>
+  <script src="./js/jquery-ui.js"></script>
+  <script src="default.js"></script>
+  <link rel="stylesheet" href="./css/jquery-ui.css">
+  <link rel="stylesheet" href="./css/default.css" />
+
+  <link rel="stylesheet" media="screen" type="text/css" href="css/colorpicker.css" />
+  <script src="./js/colorpicker.js"></script>
+  <script>if (window.module) module = window.module;</script>
+  <script>
+    //Remember to escape character here.
+    var DEFAULT_DATE_REGEX = "[\\S]+\\s+[\\S]+";
+    var DEFAULT_DATE_FORMAT = "YYYY-MM-DD hh:mm:ss"; 
+    var DEFAULT_LOG_REGEX_FORMAT = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}[\\s\\S]+?((?=^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}|$)(?!\\n|\\s))";
+    var DEFAULT_LOG_LEVEL_REGEX_FORMAT = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\S*\\s([\\S]+)";
+
+
+    var RunningInElectron = false;        
+    var Dialogs = require('dialogs');
+    //index of how many log file row
+    var iCnt = 0;
+    //Array that stores all LOADED log
+    var logArr = [];
+    //Array that stores generated ID in order
+    var idArr = [];
+    //Array that stores checked Log level    
+    var checkedLogLevel = [];
+    //Array that stores checked log file(in ID)
+    var checkedLogFile = [];
+
+    var textFilter = [];
+
+    var textIncluded = [];
+
+    var MAX_LOG_FILE = 10;
+
+    var rgbArr = [];
+
+    var LOG_LEVELS = ["ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "WARN"];
+
+
+
+
+    function readTextFile(file, id, index) {
+      return new Promise(function (resolve, reject) {
+        console.time("XMLHttpRequest: " + file);
+        var rawFile = new XMLHttpRequest();
+        rawFile.open("GET", file, true);
+        rawFile.onload = function () {
+          if (rawFile.readyState === 4) {
+            console.timeEnd("XMLHttpRequest: " + file);
+            if (rawFile.status === 200 || rawFile.status == 0) {
+              var allText = rawFile.responseText;
+              resolve({ allText: allText, file: file, id: id, index: index });
+            }
+            if (rawFile.status !== 200) {
+              var errorMsg = 'URL: ' + rawFile.responseURL + '\nStatus code: ' + rawFile.status + '\nMessage: ' + rawFile.statusText;
+              alert(errorMsg);
+              reject(errorMsg);
+            }
+          }
+        }
+        rawFile.onerror = function (e) {
+          alert("Failed to load file " + file);
+          reject("Failed to load file.");
+        }
+
+        try {
+          rawFile.send(null);
+        } catch (err) {
+          alert("Failed to load file " + file + "," + err);
+          reject(err);
+        }
+      });
+    }
+    function log(datetime, content, url, id, logLevel, index) {
+      this.datetime = datetime;
+      this.content = content;
+      this.url = url;
+      this.id = id;
+      this.logLevel = logLevel;
+      this.index = index; //Logfile index on UI
+    }
+
+    function rgb(r, g, b) {
+      this.r = r;
+      this.g = g;
+      this.b = b;
+    }
+
+    function GetConfigurationJson() {
+      //TODO store checked log file/color?
+      var config = {};
+      var LogFileArr = [];
+      var tmpRgbArr = [];
+      for (var i = 1; i <= iCnt; i++) {
+        var docVal = $("#tb" + i).val();
+        if (docVal != "") {
+          LogFileArr.push(docVal);
+          var tmpID = idArr[i - 1];
+          var backgroundCss = $(`#${tmpID}_CP`).css('background');
+          var rgb = getRGBfromString(backgroundCss);
+          tmpRgbArr.push(rgb);
+        }
+      }
+
+      config.LogFileArr = LogFileArr;
+      config.rgbArr = tmpRgbArr;
+
+      config.dateRegex = $("#dateRegex").val();
+      config.dateFormat = $("#dateFormat").val();
+      config.logRegexFormat = $("#logRegexFormat").val();
+      config.logLevelRegexFormat = $("#logLevelRegexFormat").val();
+      config.checkedLogLevel = checkedLogLevel;
+
+      config.textFilter = textFilter;
+      config.textIncluded = textIncluded;
+
+
+
+      return JSON.stringify(config);
+    }
+
+    function LoadConfig(jsonString) {
+      logArr = [];
+      idArr.length = 1;
+      checkedLogFile.length = 1;
+      try {
+        var config = JSON.parse(jsonString);
+      } catch (err) {
+        alert("Error format. " + err);
+        return;
+      }
+      $("#dateRegex").val(config.dateRegex);
+      $("#dateFormat").val(config.dateFormat);
+      $("#logRegexFormat").val(config.logRegexFormat);
+      $("#logLevelRegexFormat").val(config.logLevelRegexFormat);
+
+      if (config.LogFileArr.length > 0) {
+        while (iCnt < config.LogFileArr.length) {
+          $("#btAdd").click();
+        }
+        while (iCnt > config.LogFileArr.length) {
+          $("#btRemove").click();
+        }
+      }
+      config.LogFileArr.forEach(function (x, index) {
+        $("#tb" + (index + 1)).val(x);
+        var tmpID = idArr[index];
+        setCPColorAndUpdate(tmpID, config.rgbArr[index]);
+      });
+
+
+
+      UnselectAllbtnOnClick();
+      config.checkedLogLevel.forEach(x => {
+        $("#cb_" + x).prop('checked', true);
+        checkedLogLevel.push(x);
+      })
+
+      ClearTextFilter();
+      config.textFilter.forEach(x => {
+        AddTextFilter(x, false);
+      });
+
+      ClearTextInclude();
+      config.textIncluded.forEach(x => {
+        AddTextInclude(x, false);
+      })
+
+      updateLogAreaWithFilter();
+    }
+
+    function getId() {
+      return Math.random().toString(36).substring(7);
+    }
+    function sortlogArrByDatetime(a, b) {
+      var aDate = a.datetime;
+      var bDate = b.datetime;
+      if (aDate.isSame(bDate)) {
+        return ((a.index < b.index) ? -1 : ((a.index > b.index) ? 1 : 0));
+      }
+      return ((aDate < bDate) ? -1 : ((aDate > bDate) ? 1 : 0));
+    }
+    function appendText(content, className, lineNumber) {
+      // var li = document.createElement("li");
+      // li.className = "logLi";
+      // var pre = document.createElement("pre");
+      // pre.className = `${className} logRow`;
+      // pre.style = "display:block;";
+      // pre.innerHTML = content;
+      // li.appendChild(pre);		
+      //return li;
+      var outerDiv = document.createElement("div");
+      outerDiv.className = "logDivContainer";
+      var lineNumDiv = document.createElement("div");
+      lineNumDiv.innerText = lineNumber;
+      lineNumDiv.className = "noselect lineNum";
+      outerDiv.appendChild(lineNumDiv);
+
+      var textDiv = document.createElement("div");
+      var pre = document.createElement("pre");
+      textDiv.className = `${className} logRow`;
+      pre.innerHTML = content;
+
+      textDiv.appendChild(pre);
+      outerDiv.appendChild(textDiv);
+      return outerDiv;
+    }
+    function AddTextFilter(input, updateLog) {
+      if (input != "") {
+        textFilter.push(input);
+        $("#filterInput").val("");
+      }
+      //Append text 
+      $("#filteredText").append(input + "<br/>");
+      if (updateLog) {
+        updateLogAreaWithFilter();
+      }
+    }
+    function ClearTextFilter() {
+      textFilter = [];
+      $("#filteredText").html("");
+      updateLogAreaWithFilter();
+    }
+    //For Text inclusion
+    function AddTextInclude(input, updateLog) {
+
+      if (input != "") {
+        textIncluded.push(input);
+        $("#includeInput").val("");
+      }
+      //Append text 
+      $("#IncludedText").append(input + "<br/>");
+      if (updateLog) {
+        updateLogAreaWithFilter();
+      }
+    }
+    function ClearTextInclude() {
+      textIncluded = [];
+      $("#IncludedText").html("");
+      updateLogAreaWithFilter();
+    }
+
+    function copyToClipboard(text) {
+      var dummy = document.createElement("input");
+      document.body.appendChild(dummy);
+      dummy.setAttribute('value', text);
+      dummy.select();
+      document.execCommand("copy");
+      document.body.removeChild(dummy);
+    }
+
+    function GenerateConfigAndSaveToFile() {
+      var textToSave = GetConfigurationJson();
+
+      var hiddenElement = document.createElement('a');
+      hiddenElement.href = 'data:attachment/text,' + encodeURI(textToSave);
+      hiddenElement.target = '_blank';
+      hiddenElement.download = 'config.json';
+      hiddenElement.click();
+
+    }
+
+    function GenerateConfig() {
+      var config = GetConfigurationJson();
+      copyToClipboard(config);
+      alert("Configuration copied to clipboard.")
+    }
+
+    function PromptLoadConfig() {
+
+      if (RunningInElectron) {
+        var dialogs = Dialogs(opts = {})
+        dialogs.prompt('Enter config json below:', '', function (ok) {
+          if (ok != undefined) {
+            LoadConfig(ok);
+          }
+        })
+
+      } else {
+        var input = prompt("Enter config json below:");
+        if (input != null) {
+          LoadConfig(input);
+        }
+      }
+    }
+
+
+    function getStyle(className) {
+      //[1] is default.css
+      var classes = document.styleSheets[1].cssRules;
+      for (var x = 0; x < classes.length; x++) {
+        if (classes[x].selectorText == className) {
+          return classes[x];
+        }
+      }
+    }
+
+
+
+    $(function () {
+
+
+
+
+
+
+
+
+
+      //Init default value
+      $("#dateRegex").val(DEFAULT_DATE_REGEX);
+      $("#dateFormat").val(DEFAULT_DATE_FORMAT);
+      $("#logRegexFormat").val(DEFAULT_LOG_REGEX_FORMAT);
+      $("#logLevelRegexFormat").val(DEFAULT_LOG_LEVEL_REGEX_FORMAT);
+
+
+
+      //TODO OMG this is so 7
+      //http://colorsafe.co
+      rgbArr.push(new rgb(74, 224, 140));
+      rgbArr.push(new rgb(0, 250, 154));
+      rgbArr.push(new rgb(107, 185, 240));
+      rgbArr.push(new rgb(0, 255, 255));
+      rgbArr.push(new rgb(174, 168, 211));
+      rgbArr.push(new rgb(220, 198, 224));
+      rgbArr.push(new rgb(217, 179, 0));
+      rgbArr.push(new rgb(242, 121, 39));
+      rgbArr.push(new rgb(255, 99, 71));
+      rgbArr.push(new rgb(231, 76, 60));
+      if ((window && window.process && window.process.type) != undefined) {
+        RunningInElectron = true;
+      }
+      initLogLevel();
+      $("#MAX_LOG_COUNT").text(MAX_LOG_FILE);
+      $(".settingSection").accordion({
+        collapsible: true,
+        heightStyle: "content",
+        active: 2
+      });
+      $("#logFiles").accordion('option', 'active', 0);
+      //init logLevelArray
+      checkedLogLevel = LOG_LEVELS;
+      var container = $(document.createElement('div'));
+      container.className = "LogFileContainer";
+      $('#btAdd').click(function () {
+        if (iCnt < MAX_LOG_FILE) {
+          iCnt = iCnt + 1;
+          var tmpId = getId();
+          idArr.push(tmpId);
+          var rgbString = rgbToString(getNewColor());
+          var tmpCp = $(document.createElement('div')).css({ margin: '5px', width: '30px', height: '30px', background: 'url(./images/select.png) center ' + rgbString });
+          var cpId = tmpId + "_" + "CP";
+          tmpCp.attr('id', cpId);
+          tmpCp.ColorPicker({
+            color: '#0000ff',
+            onShow: function (colpkr) {
+              $(colpkr).fadeIn(500);
+              return false;
+            },
+            onHide: function (colpkr) {
+              $(colpkr).fadeOut(500);
+              return false;
+            },
+            onChange: function (hsb, hex, rgb) {
+              $(`#${cpId}`).css('backgroundColor', '#' + hex);
+              $(`.${tmpId}`).css('color', '#' + hex);
+            }
+          });
+          var part1 = `<div style="padding:5px;display:flex;align-items:center;" id="div${iCnt}"> <input type='checkbox' onchange="checkboxOnChange(this,'${tmpId}')" checked/> `;
+          //init checkedLogFile
+          checkedLogFile.push(tmpId);
+          var part2 = `<span>Log file ${iCnt}: </span><input type=text class="input" id="tb${iCnt}" style="width:370px" > <input id="tbid${iCnt}" type="hidden" value="${tmpId}"/></div>`;
+          container.append(part1 + part2);
+          $('#links').append(container);
+          var firstChild = $(`#div${iCnt} :first-child`);
+          tmpCp.insertAfter(firstChild);
+          $('#links').append(container);
+        }
+        if (iCnt == MAX_LOG_FILE) {
+          $('#btAdd').attr('class', 'bt-disable');
+          $('#btAdd').attr('disabled', 'disabled');
+        }
+        //Update ICntValue Text
+        $("#ICntValue").text(iCnt);
+        //TODO looking for pure css function..
+        $(".colorpicker").hover(function () {
+          $(".ControlPanelContent").css('transition', 'transition: opacity .2s ease-out');
+          $(".ControlPanelContent").css('opacity', '1');
+        }, function () {
+          $(".ControlPanelContent").css('transition', 'opacity .2s ease-out');
+          $(".ControlPanelContent").css('opacity', '0.5');
+        });
+
+
+
+      });
+      // REMOVE ONE ELEMENT PER CLICK.
+      $('#btRemove').click(function () {
+        if (iCnt != 1) {
+
+          //Remove it from id array
+          var tmpId = $('#tbid' + iCnt).val();
+
+          checkedLogFile = checkedLogFile.filter(function (obj) {
+            return obj !== tmpId;
+          });
+          idArr = idArr.filter(function (obj) {
+            return obj !== tmpId;
+          });
+
+          logArr = logArr.filter(function (obj) {
+            return obj.id !== tmpId;
+          });
+
+          $('#div' + iCnt).remove();
+
+          //Remove color picker
+          $(".colorpicker:last-child").remove();
+
+
+          iCnt = iCnt - 1;
+          updateLogAreaWithFilter();
+        }
+        //Resume button state
+        if (iCnt < MAX_LOG_FILE) {
+          $('#btAdd').attr('class', 'bt');
+          $('#btAdd').removeAttr('disabled');
+        }
+        $("#ICntValue").text(iCnt);
+
+
+      });
+      $('#btAdd').click();
+
+      $('#AddTextBtn').click(function () {
+        var input = $("#includeInput").val();
+        AddTextInclude(input, true);
+      });
+
+      $(".cb_logLevel").each(function () {
+        $(this).change(function () {
+          var isChecked = $(this).prop("checked");
+          if (isChecked) {
+            checkedLogLevel.push(this.value);
+          } else//Remove it from array
+          {
+            var index = checkedLogLevel.indexOf(this.value);
+            if (index !== -1) checkedLogLevel.splice(index, 1);
+          }
+          updateLogAreaWithFilter();
+        });
+      });
+
+
+      $('#AddTextFilterBtn').click(function () {
+        var input = $("#filterInput").val();
+        AddTextFilter(input, true);
+      });
+
+      $('#GenerateConfigBtn').click(function () {
+        GenerateConfig();
+      });
+
+      $('#LoadConfigBtn').click(function () {
+        PromptLoadConfig();
+      });
+
+      $('#FileGenerateConfigBtn').click(function () {
+        GenerateConfigAndSaveToFile();
+      });
+
+      $('#FileLoadConfigBtn').click(function () {
+        $("#jsonFile").click();
+      });
+
+
+
+      $("#jsonFile").change(function (evt) {
+
+
+        try {
+          var files = evt.target.files; // FileList object				
+          var file = files[0];
+          $("#jsonFile").val("");
+          var reader = new FileReader();
+          reader.onloadend = function () {
+            var jsonString = reader.result;
+            LoadConfig(jsonString);
+          }
+          reader.readAsBinaryString(file);
+
+        } catch (err) {
+          alert("Could not load file." + err);
+          return;
+        }
+
+      }
+      );
+
+
+
+      $(".ControlPanelContent").hover(function () {
+        $(this).css('transition', 'transition: opacity .2s ease-out');
+        $(this).css('opacity', '1');
+      }, function () {
+        $(this).css('transition', 'opacity .2s ease-out');
+        $(this).css('opacity', '0.5');
+      });
+
+      $("#MenuBtn").hover(function () {
+        $(".ControlPanelContent").css('transition', 'transition: opacity .2s ease-out');
+        $(".ControlPanelContent").css('opacity', '1');
+      }, function () {
+        $(".ControlPanelContent").css('transition', 'opacity .2s ease-out');
+        $(".ControlPanelContent").css('opacity', '0.5');
+      });
+      //Electron init..
+      if (RunningInElectron) {
+        var args = require('electron').remote.process.argv;
+        var configPath = args[1];
+        if (configPath != null) {
+          const fs = require("fs");
+          // Asynchronous read
+          fs.readFile(configPath, function (err, data) {
+            if (err) {
+              return alert(err);
+            }
+            var configJson = data.toString();
+            LoadConfig(configJson);
+          });
+        }
+
+        // Retrieve the electron in page search module
+        const searchInPage = require('electron-in-page-search').default;
+        const remote = require('electron').remote;
+        // or
+        // import searchInPage from 'electron-in-page-search';
+
+        // Create an instance with the current window
+        const inPageSearch = searchInPage(remote.getCurrentWebContents());
+
+        // Alternatively add the key event listener [CTRL+F]
+        window.addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.keyCode === 70) {
+            inPageSearch.openSearchWindow();
+          }
+        }, false);
+
+
+      }
+      //Hide title bar if running in native html
+      if (!RunningInElectron) {
+        $("#title-bar").css("visibility", "collapse");
+      }
+
+    });
+
+    function getTextWidth(text, font) {
+      // re-use canvas object for better performance
+      var canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
+      var context = canvas.getContext("2d");
+      context.font = font;
+      var metrics = context.measureText(text);
+      return metrics.width;
+    }
+
+
+
+    function getNewColor() {
+
+      var existingRGBArr = []
+      idArr.forEach(function (value) {
+        var rgbString = $("#" + value + "_CP").css("background");
+        if (rgbString != null) {
+          var rgb = getRGBfromString(rgbString);
+          existingRGBArr.push(rgb);
+        }
+      });
+
+      var resultColor = rgbArr[Math.floor(Math.random() * rgbArr.length)];
+
+      var isNewColor = false;
+
+      while (!isNewColor) {
+        var matchColorFound = false;
+        for (var i = 0; i < existingRGBArr.length; i++) {
+          var tmp = existingRGBArr[i];
+          if (resultColor.r == tmp.r && resultColor.g == tmp.g && resultColor.b == tmp.b) {
+            matchColorFound = true;
+            resultColor = rgbArr[Math.floor(Math.random() * rgbArr.length)];
+            break;
+          }
+        }
+        if (!matchColorFound) {
+          isNewColor = true;
+        }
+      }
+
+      return resultColor;
+    }
+
+    function rgbToString(rgb) {
+      var rgbString = `rgb(${rgb.r},${rgb.g},${rgb.b})`;
+      return rgbString;
+    }
+
+    function setCPColorAndUpdate(id, rgb) {
+      var tmpCp = $("#" + id + "_CP");
+      var colorPickerCss = tmpCp.css("background");
+      var rgbString = rgbToString(rgb);
+      //updateColorPicker background css and perform update on fonts.
+      var newCss = colorPickerCss.replace(/rgb\(.*?\)/gm, rgbString);
+      tmpCp.css('background', newCss);
+      $(`.${id}`).css('color', rgbToHex(rgb));
+    }
+
+    function getRGBfromString(str) {
+      var match = str.match(/rgba?\((\d{1,3}), ?(\d{1,3}), ?(\d{1,3})\)?(?:, ?(\d(?:\.\d?))\))?/);
+      return new rgb ? {
+        r: match[1],
+        g: match[2],
+        b: match[3]
+      } : {};
+    }
+
+    function componentToHex(c) {
+      var hex = c.toString(16);
+      return hex.length == 1 ? "0" + hex : hex;
+    }
+
+    function rgbToHex(rgb) {
+      return "#" + componentToHex(rgb.r) + componentToHex(rgb.g) + componentToHex(rgb.b);
+    }
+
+    function initLogLevel() {
+      LOG_LEVELS.forEach(element => {
+
+        var tmpSpan = `<span>
+								<input type="checkbox" id="cb_${element}" class="cb_logLevel" value="${element}" checked>
+								<label for="cb_${element}">${element}</label>
+							</span>`;
+        $("#logLevelDiv").append(tmpSpan);
+
+      });
+    }
+
+    function checkboxOnChange(obj, className) {
+      if (!$(obj).is(":checked")) {
+        $('.' + className).hide();
+        var index = checkedLogFile.indexOf(className);
+        if (index !== -1) checkedLogFile.splice(index, 1);
+      }
+      else {
+        $('.' + className).show();
+        checkedLogFile.push(className);
+      }
+      updateLogAreaWithFilter();
+    }
+    function updateLogAreaWithFilter() {
+      $(".loader").css("visibility", "visible");
+      console.time("updateLogAreaWithFilter");
+      $("#LogArea").empty();
+      var resultArray = [];
+      var arrayContainsSubString = function (filterArr, val) {
+        return filterArr.some(function (e) {
+          return val.toLowerCase().indexOf(e.toLowerCase()) > 0;
+        })
+      }
+      logArr.forEach(function (val) {
+        if (!checkedLogFile.includes(val.id))
+          return;
+        if (!checkedLogLevel.includes(val.logLevel))
+          return;
+        if (arrayContainsSubString(textFilter, val.content))
+          return;
+        if (textIncluded.length > 0) {
+          if (!arrayContainsSubString(textIncluded, val.content))
+            return;
+        }
+        resultArray.push(val);
+      });
+
+      $("#LogArea").empty();
+      console.time("forLoop appendText");
+      var fragment = document.createDocumentFragment();
+      var lineNumber = 1;
+      for (var i = 0; i < resultArray.length; i++) {
+        var val = resultArray[i];
+        fragment.appendChild(appendText(val.content, val.id, lineNumber++));
+      }
+      document.getElementById("LogArea").appendChild(fragment);
+      console.timeEnd("forLoop appendText");
+
+      //FIX work around for selecting last line
+      $('#LogArea').append(appendText("&zwnj;", "noselect", ""));
+      //FIX put it a better way?
+      $('.logRow').click(function () {
+        var className = "ClickHighLightedBackground";
+        if ($(this).hasClass(className)) {
+          $(this).removeClass(className);
+        }
+        else {
+          $(".logRow").removeClass(className);
+          $(this).addClass(className)
+        }
+      });
+      $(".logRow").hover(function () {
+        var className = "highLightedBackground";
+        if (!$(this).hasClass(className)) {
+          $(this).addClass(className)
+        }
+      }, function () {
+        var className = "highLightedBackground";
+        $(this).removeClass(className);
+      });
+
+
+
+      for (var i = 0; i < idArr.length; i++) {
+        //Get color picker value
+        var tmpString = $('#' + idArr[i] + '_CP').css("background");
+        //append to target class background
+        var rgbStr = tmpString.match(/rgb\(.*?\)/);
+        $('.' + idArr[i]).css("color", rgbStr[0]);
+      }
+      console.timeEnd("updateLogAreaWithFilter");
+      //update line number width      
+      try {
+        var lineNumArr = document.getElementsByClassName("lineNum");
+        //get largest number width
+        var lastLineNum = lineNumArr[lineNumArr.length - 2];
+        var maxWidth = window.getComputedStyle(lastLineNum).getPropertyValue('width');
+        //20 is hardcoded margin.
+        var updatedMargin = parseFloat(maxWidth.replace('\px', "")) + 20;
+        $(".logRow").css('margin-left', updatedMargin + "px");
+        $('.lineNum').css('width', maxWidth);
+      } catch (err) {
+        console.log(err);
+      }
+      $("#NumOfLog").text(resultArray.length);
+      $(".loader").css("visibility", "hidden");
+    }
+    function gogogo() {
+      $(".loader").css("visibility", "visible");
+      console.time("gogogo");
+      logArr = [];
+      $("#LogArea").empty();
+      console.time("(ALL)readTextFile");
+      var promises = [];
+      for (var i = 1; i <= iCnt; i++) {
+        var docVal = $("#tb" + i).val();
+        var id = $("#tbid" + i).val();
+        var cbChecked = $(`#div${i} input`).first().prop('checked');
+        if (docVal == "" || !cbChecked) {
+          continue
+        }
+        var tmpTimerName = "Read " + docVal;
+
+        console.time(tmpTimerName);
+        var promise = readTextFile(docVal, id, i).then(function ({ allText, file, id, index }) {
+          //TODO seek for a better one
+          var logRegexFormat = $("#logRegexFormat").val();
+          var myRegex = new RegExp(logRegexFormat, "gm");
+          var arr = allText.match(myRegex);
+          if (arr == null || arr.length == 0) {
+            alert("Regex match failed for file " + rawFile.responseURL + "!");
+            return;
+          }
+          var regexStr = $('#dateRegex').val();
+          var regexp = new RegExp(regexStr);
+          for (var i = 0; i < arr.length; i++) {
+            try {
+              var dateStr = regexp.exec(arr[i])[0];
+              var dateFormat = $('#dateFormat').val();
+              var date = moment(dateStr, dateFormat);
+              var logLevelRegexFormat = $("#logLevelRegexFormat").val();
+              var logLevelRegex = new RegExp(logLevelRegexFormat, "gm");
+              var logLevel = logLevelRegex.exec(arr[i])[1];
+              logArr.push(new log(date, arr[i], file, id, logLevel, index));
+            } catch (err) {
+              console.log(err);
+            }
+          }
+        });
+        console.timeEnd(tmpTimerName);
+        promises.push(promise);
+      }
+      Promise.all(promises).then(function () {
+        console.timeEnd("(ALL)readTextFile");
+        console.time("logArr sort");
+        logArr.sort(sortlogArrByDatetime);
+        console.timeEnd("logArr sort");
+        updateLogAreaWithFilter();
+        console.timeEnd("gogogo");
+        $(".loader").css("visibility", "hidden");
+        if ($("#NumOfLog").text == 0) {
+          alert("0 rows returned!");
+        }
+      }, function () {//on error         
+        $(".loader").css("visibility", "hidden");
+      });
+    }
+    function SelectAllbtnOnClick() {
+      $(".cb_logLevel").each(function () {
+        $(this).prop('checked', true);
+      });
+      checkedLogLevel = LOG_LEVELS;
+      updateLogAreaWithFilter();
+    }
+    function UnselectAllbtnOnClick() {
+      $(".cb_logLevel").each(function () {
+        $(this).prop('checked', false);
+      });
+      checkedLogLevel = [];
+      updateLogAreaWithFilter();
+    }
+    function OpenMenu() {
+      $("#ControlPanel").toggleClass("closed");
+      var panelWidth = $("#ControlPanel").width();
+      if ($("#ControlPanel").hasClass("closed")) {
+        $("#ControlPanel").animate({ right: panelWidth * -1 });
+      }
+      else {
+        $("#ControlPanel").animate({ right: 25 });
+      }
+    }
+  </script>
+</head>
+
+<body style="overflow: hidden">
+  <div id="title-bar" class="noselect" style="height: 3%;">
+
+    <div id="title">Log Viewer</div>
+
+    <div id="title-bar-btns">
+
+      <button id="min-btn">-</button>
+
+      <button id="max-btn">+</button>
+
+      <button id="close-btn">x</button>
+
+    </div>
+
+  </div>
+  <div id="ControlPanel" class="ControlPanel noselect" style="z-index:99;">
+    <button id="MenuBtn" onclick="OpenMenu()">≡</button>
+    <div class="ControlPanelContent">
+      <div class="regexForm settingSection">
+        <h3>Regex Settings</h3>
+        <div>
+          <label>Regex for date:</label>
+          <input id="dateRegex"/>
+
+          <label>Datetime format:</label>
+          <input id="dateFormat"/>
+
+          <label>Log Regex format:</label>
+          <input id="logRegexFormat"/>
+
+          <label>Loglevel Regex format:</label>
+          <input id="logLevelRegexFormat"/>
+        </div>
+      </div>
+      <hr>
+      <div class="settingSection" id="logFiles">
+        <h3>Log files</h3>
+        <div>
+          <div style="padding:5px" id="main">
+            <input type="button" id="btAdd" value="Add" class="bt" />
+            <input type="button" id="btRemove" value="Remove" class="bt" />
+            <span id="ICntValue">0</span>
+            <span>/</span>
+            <span id="MAX_LOG_COUNT"></span>
+          </div>
+          <!--TODO overflow-y..?-->
+          <div id="links">
+          </div>
+        </div>
+      </div>
+      <hr>
+      <!--TODO may be use a array here?-->
+      <div class="logLevelDiv" id="logLevelDiv">
+
+      </div>
+      <br>
+      <input type="button" onclick="SelectAllbtnOnClick()" value="Select All">
+
+      <input type="button" onclick="UnselectAllbtnOnClick()" value="Unselect All">
+      <hr>
+      <div class="settingSection">
+        <h3>Ignore Text</h3>
+        <div style="display: table;width:100%;border:0">
+          <div class="row">
+            <div class="column">
+              <span>
+                Ignore Text:
+              </span>
+            </div>
+            <div class="column">
+              <input type="textbox" id="filterInput">
+              <input type="button" value="Add" id="AddTextFilterBtn"></input>
+              <input type="button" value="Clear All" onclick="ClearTextFilter()"></input>
+            </div>
+          </div>
+          <div class="row">
+            <div class="column">
+              <div id="filteredText" style="font-weight:bold"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <hr>
+      <div class="settingSection">
+        <h3>Include Text</h3>
+        <div style="display: table;width:100%;border:0">
+          <div class="row">
+            <div class="column">
+              <span>Include:
+              </span>
+            </div>
+            <div class="column">
+              <input type="textbox" id="includeInput">
+              <input type="button" value="Add" id="AddTextBtn"></input>
+              <input type="button" value="Clear All" onclick="ClearTextInclude()"></input>
+            </div>
+          </div>
+          <div class="row">
+            <div class="column">
+              <div id="IncludedText" style="font-weight:bold"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <hr>
+      <div class="settingSection">
+        <h3>Save/Load setting</h3>
+        <div style="display: table;width: 100%;border:0;">
+          <div class="row">
+            <div class="column">
+              <span>
+                Clipboard:
+              </span>
+            </div>
+            <div class="column">
+              <button id="GenerateConfigBtn">Generate</button>
+              <button id="LoadConfigBtn">Load</button>
+            </div>
+          </div>
+          <div class="row">
+            <div class="column">
+              <span>
+                File:
+              </span>
+            </div>
+            <div class="column">
+              <button id="FileGenerateConfigBtn">Generate</button>
+              <button id="FileLoadConfigBtn">Load</button>
+              <input type="file" id="jsonFile" style="display:none">
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <hr>
+      <div class="finalRow">          
+        <button id="GogogoBtn" onclick="gogogo()"> Go Go Go</button>
+        <span id="Timer"></span>
+        <div class="loader" style="display: inline-block;vertical-align: middle;visibility: hidden;"></div>
+        <span>Number of log row: </span>
+        <span id="NumOfLog">0</span>
+
+      </div>
+    </div>
+  </div>
+  <div style="height: 97%;overflow: auto;will-change:transform;" id="LogArea">
+
+
+  </div>
+</body>
+
+</html>

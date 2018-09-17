@@ -1,0 +1,29 @@
+.LogTable {
+  height: 97%;
+  overflow: auto;
+  will-change:transform;
+  display: table;
+}
+
+.LogTable > .row{
+  display: table-row;
+}
+
+.LogTable > .row > .column{
+  display: table-cell;
+  float: left;
+  text-align: right;
+  margin-left: 10px;
+  font-size: 14px;
+}
+
+.LogTable > .row > .column:first-child{
+  display: table-cell;
+  user-select: none;
+  color: gray;
+}
+
+.LogTable > .row > .column > pre{
+  display: block;
+  margin: 0px;
+}

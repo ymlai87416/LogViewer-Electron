@@ -1,0 +1,56 @@
+.ControlPanelShow
+{
+  z-index: 99;
+  right: 25px;
+  width: 550px;
+  position: fixed;
+  transition-timing-function: ease-out;
+  transition: right 0.5s;
+}
+
+.ControlPanelHide{
+  z-index: 99;
+  right: -550px;
+  width: 550px;
+  position: fixed;
+  transition-timing-function: ease-in;
+  transition: right 0.5s;
+}
+
+.ControlPanelContent
+{
+  opacity: 0.5;
+  transition-timing-function: ease-out;
+  background: gainsboro;
+  padding: 15px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.ControlPanelContent:hover{
+  opacity: 1;
+}
+
+.MenuButton{
+  position: absolute;
+  left: -50px;
+  height: 30px;
+  width: 30px;
+  font-size: 20px;
+}
+
+.GogogoBtn{
+  color: #f1f1f1;
+  background-color: #5cb85c;
+  border-color: #4cae4c;
+  display: inline-block;
+  padding: 6px 12px;
+  margin-bottom: 0;
+  font-size: 14px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.finalRow > span{
+  margin: 2px;
+}

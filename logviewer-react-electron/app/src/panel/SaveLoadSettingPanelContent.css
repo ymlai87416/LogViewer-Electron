@@ -1,0 +1,20 @@
+
+.SaveLoadSettingPanelContent{
+  display: 'table';
+  width: '100%';
+  border: '0';
+  text-align: 'left';
+}
+
+.SaveLoadSettingPanelContent > * > .column:first-child {
+  width: 100px;
+}
+
+.SaveLoadSettingPanelContent > * > .column {
+  display: table-cell;
+}
+
+.SaveLoadSettingPanelContent > * > .column > button {
+  margin: 2px;
+  width: 100px;
+}

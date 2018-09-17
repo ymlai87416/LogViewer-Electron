@@ -1,0 +1,27 @@
+
+.TextListPanelContent{
+  display: 'table';
+  width: '100%';
+  border: '0';
+  text-align: 'left';
+}
+
+filteredTextStyle{
+  font-weight : 'bold';
+}
+
+.TextListPanelContent > row {
+  display: table-row;
+}
+
+.TextListPanelContent > * > .column:first-child {
+  width: 100px;
+}
+
+.TextListPanelContent > * > .column {
+  display: table-cell;
+}
+
+.TextListPanelContent > * > .column > * {
+  margin: 2px;
+}

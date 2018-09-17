@@ -1,0 +1,11 @@
+.LogfilesPanelContent {
+  display: block;
+  text-align:left;
+}
+
+.LogfilesPanelContent > div >  *
+{
+  margin: 2px;
+}
+
+

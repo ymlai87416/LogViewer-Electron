@@ -69,7 +69,6 @@ class LogLevelPanelContent extends PanelContent {
   }
 
   createLogLevelCheckBox = (element, index, currState) => {
-    console.log(currState)
     const isSelected = currState.selectedLogLevelList.includes(element);
     return(
       <span key={index}>

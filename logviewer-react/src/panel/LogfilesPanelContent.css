@@ -8,4 +8,6 @@
   margin: 2px;
 }
 
-
+.btnAddRemove:disabled {
+  color: grey;
+}

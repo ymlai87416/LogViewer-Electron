@@ -14,7 +14,6 @@ import {
   AccordionItemTitle,
   AccordionItemBody,
 } from 'react-accessible-accordion';
-import 'react-accessible-accordion/dist/minimal-example.css'
 import 'bootstrap/dist/css/bootstrap.css'
 
 class Panel extends Component {
@@ -85,7 +84,7 @@ class Panel extends Component {
       var loadedState = JSON.parse(jsonString);
       console.log(loadedState);
       this.setState(loadedState, () => 
-      console.log("loadConfig: setstate completed"));
+        console.log("loadConfig: setstate completed"));
     } catch (err) {
       alert("Error format. " + err);
       return;
@@ -131,9 +130,20 @@ class Panel extends Component {
     hiddenElement.click();
   }
 
-  selectConfigFile = () => {
-    /*TODO*/
-    
+  selectConfigFile = (filename) => {
+    var self = this;
+    try {	
+      var reader = new FileReader();
+      reader.onloadend = function () {
+        var jsonString = reader.result;
+        self.loadConfig(jsonString);
+      }
+      reader.readAsBinaryString(filename);
+
+    } catch (err) {
+      alert("Could not load file." + err);
+      return;
+    }
   }
 
   openMenu = () => {
@@ -148,15 +158,13 @@ class Panel extends Component {
 
   render() {
     const currState = this.state
-    console.log("Render");
-    console.log(currState.LogFileList);
 
     return (
       <div className={currState.ShowMenu ? "ControlPanelShow": "ControlPanelHide"}>
         <button className="MenuButton" onClick={this.openMenu}>≡</button>
         <div className="ControlPanelContent">
           <Accordion>
-            <AccordionItem expanded='true'>
+            <AccordionItem>
               <AccordionItemTitle><h3>Regex Settings</h3></AccordionItemTitle>
               <AccordionItemBody>
                 <RegexPanelContent 
@@ -166,7 +174,7 @@ class Panel extends Component {
             </AccordionItem>
           </Accordion>
 
-          <hr/>
+          <hr className="panel-hr"/>
 
           <Accordion>
             <AccordionItem expanded='true'>
@@ -178,15 +186,15 @@ class Panel extends Component {
             </AccordionItem>
           </Accordion>
           
-          <hr/>
+          <hr className="panel-hr"/>
 
           <LogLevelPanelContent logLevelFilterList={currState.LogLevelFilterList} 
             onChanged={(event) => {this.onChangeHandlerWithReload("LogLevelFilterList", event);}}></LogLevelPanelContent>
 
-          <hr/>
+          <hr className="panel-hr"/>
 
           <Accordion>
-            <AccordionItem  expanded='true'>
+            <AccordionItem>
               <AccordionItemTitle><h3>Ignore Text</h3></AccordionItemTitle>
               <AccordionItemBody>
                 <TextListPanelContent header="Ignore text: " textList={currState.IgnoreTextList} 
@@ -195,10 +203,10 @@ class Panel extends Component {
             </AccordionItem>
           </Accordion>
 
-          <hr/>
+          <hr className="panel-hr"/>
 
           <Accordion>
-            <AccordionItem expanded='true'>
+            <AccordionItem>
               <AccordionItemTitle><h3>Include Text</h3></AccordionItemTitle>
               <AccordionItemBody>
                 <TextListPanelContent header="Include text: " textList={currState.IncludeTextList} 
@@ -207,10 +215,10 @@ class Panel extends Component {
             </AccordionItem>
           </Accordion>
 
-          <hr/>
+          <hr className="panel-hr"/>
 
           <Accordion>
-            <AccordionItem expanded='true'>
+            <AccordionItem>
               <AccordionItemTitle><h3>Save/Load setting</h3></AccordionItemTitle>
               <AccordionItemBody>
               <SaveLoadSettingPanelContent onClipboardGenerate={this.generateConfig} onClipboardLoad={this.promptLoadConfig} 
@@ -219,7 +227,7 @@ class Panel extends Component {
             </AccordionItem>
           </Accordion>
 
-          <hr/>
+          <hr className="panel-hr"/>
           
           <div className="finalRow" style={{textAlign: 'left'}}>          
             <button className="GogogoBtn" onClick={(event) => this.props.onReload(this.state)}> Go Go Go</button>

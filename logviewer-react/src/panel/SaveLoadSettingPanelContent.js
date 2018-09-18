@@ -4,6 +4,14 @@ import './SaveLoadSettingPanelContent.css';
 
 class SaveLoadSettingPanelContent extends PanelContent {
 
+  onChangeFile = (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    var file = event.target.files[0];
+    console.log(file);
+    this.props.onFileLoad(file);
+  }
+
   render() {
     return (
       <div className="SaveLoadSettingPanelContent">
@@ -26,8 +34,8 @@ class SaveLoadSettingPanelContent extends PanelContent {
             </div>
             <div className="column">
               <button onClick={this.props.onFileGenerate}>Generate</button>
-              <button onClick={this.props.onFileLoad} id="FileLoadConfigBtn">Load</button>
-              <input className="jsonFile" type="file" style={{display:'none'}}/>
+              <button onClick={()=>{this.jsonFile.click()}} id="FileLoadConfigBtn">Load</button>
+              <input type="file" ref={(ref) => this.jsonFile = ref} style={{display:'none'}} onChange={this.onChangeFile}/>
             </div>
           </div>
 

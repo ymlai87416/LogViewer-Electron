@@ -149,8 +149,6 @@ class LogfilesPanelContent extends PanelContent {
     const enableAddButton = entryCount < 10
     const enableRemoveButton = entryCount > 1
 
-    console.log("LogfilesPanelContent: render");
-
     return (
       <div className="LogfilesPanelContent">
         <div style={{padding: '5px'}} >

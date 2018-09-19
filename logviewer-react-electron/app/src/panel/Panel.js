@@ -7,14 +7,14 @@ import TextListPanelContent from './TextListPanelContent';
 import SaveLoadSettingPanelContent from './SaveLoadSettingPanelContent';
 import SubPanel from './SubPanel';
 import update from 'immutability-helper';
-import Dialog from 'react-bootstrap-dialog'
 import {
   Accordion,
   AccordionItem,
   AccordionItemTitle,
   AccordionItemBody,
 } from 'react-accessible-accordion';
-import 'react-accessible-accordion/dist/minimal-example.css'
+import Dialog from 'react-dialog'
+import 'react-dialog/css/index.css';
 
 class Panel extends Component {
 
@@ -48,6 +48,7 @@ class Panel extends Component {
       IncludeTextList: [],
 
       ShowMenu: true,
+      isDialogOpen: false,
     };
   }
 
@@ -82,7 +83,10 @@ class Panel extends Component {
   loadConfig = (jsonString) => {
     try {
       var loadedState = JSON.parse(jsonString);
-      this.setState(loadedState);
+      loadedState["isDialogOpen"] = false;
+      console.log(loadedState);
+      this.setState(loadedState, () => 
+        console.log("loadConfig: setstate completed"));
     } catch (err) {
       alert("Error format. " + err);
       return;
@@ -105,6 +109,7 @@ class Panel extends Component {
   }
 
   promptLoadConfig = () => {
+    /* bootstrap version....
     this.dialog.show({
       body: 'Enter config json below:',
       prompt: Dialog.TextPrompt(),
@@ -116,7 +121,34 @@ class Panel extends Component {
         })
       ]
     })
+
+    var input = prompt("Enter config json below:");
+    if (input != null) {
+      this.loadConfig(input);
+    }*/
   }
+
+  openLoadConfigDialog = () => {
+    var newState = update(this.state, {
+      isDialogOpen: {$set: true}
+    })
+
+    this.setState(newState);
+  }
+ 
+  closeLoadConfigDialog = (jsonMessage) => 
+  { 
+    if (jsonMessage){
+      this.loadConfig(jsonMessage);
+    }
+    else{
+      var newState = update(this.state, {
+        isDialogOpen: {$set: false}
+      })
+  
+      this.setState(newState);
+    }
+  };
 
   generateConfigAndSaveToFile = () =>{
     var textToSave = this.getConfigurationJson();
@@ -128,9 +160,20 @@ class Panel extends Component {
     hiddenElement.click();
   }
 
-  selectConfigFile = () => {
-    /*TODO*/
-    
+  selectConfigFile = (filename) => {
+    var self = this;
+    try {	
+      var reader = new FileReader();
+      reader.onloadend = function () {
+        var jsonString = reader.result;
+        self.loadConfig(jsonString);
+      }
+      reader.readAsBinaryString(filename);
+
+    } catch (err) {
+      alert("Could not load file." + err);
+      return;
+    }
   }
 
   openMenu = () => {
@@ -151,7 +194,7 @@ class Panel extends Component {
         <button className="MenuButton" onClick={this.openMenu}>≡</button>
         <div className="ControlPanelContent">
           <Accordion>
-            <AccordionItem expanded='true'>
+            <AccordionItem>
               <AccordionItemTitle><h3>Regex Settings</h3></AccordionItemTitle>
               <AccordionItemBody>
                 <RegexPanelContent 
@@ -161,7 +204,7 @@ class Panel extends Component {
             </AccordionItem>
           </Accordion>
 
-          <hr/>
+          <hr className="panel-hr"/>
 
           <Accordion>
             <AccordionItem expanded='true'>
@@ -173,15 +216,15 @@ class Panel extends Component {
             </AccordionItem>
           </Accordion>
           
-          <hr/>
+          <hr className="panel-hr"/>
 
-          <LogLevelPanelContent logLevelFilterList={currState.logLevelFilterList} 
+          <LogLevelPanelContent logLevelFilterList={currState.LogLevelFilterList} 
             onChanged={(event) => {this.onChangeHandlerWithReload("LogLevelFilterList", event);}}></LogLevelPanelContent>
 
-          <hr/>
+          <hr className="panel-hr"/>
 
           <Accordion>
-            <AccordionItem  expanded='true'>
+            <AccordionItem>
               <AccordionItemTitle><h3>Ignore Text</h3></AccordionItemTitle>
               <AccordionItemBody>
                 <TextListPanelContent header="Ignore text: " textList={currState.IgnoreTextList} 
@@ -190,10 +233,10 @@ class Panel extends Component {
             </AccordionItem>
           </Accordion>
 
-          <hr/>
+          <hr className="panel-hr"/>
 
           <Accordion>
-            <AccordionItem expanded='true'>
+            <AccordionItem>
               <AccordionItemTitle><h3>Include Text</h3></AccordionItemTitle>
               <AccordionItemBody>
                 <TextListPanelContent header="Include text: " textList={currState.IncludeTextList} 
@@ -202,19 +245,19 @@ class Panel extends Component {
             </AccordionItem>
           </Accordion>
 
-          <hr/>
+          <hr className="panel-hr"/>
 
           <Accordion>
-            <AccordionItem expanded='true'>
+            <AccordionItem>
               <AccordionItemTitle><h3>Save/Load setting</h3></AccordionItemTitle>
               <AccordionItemBody>
-              <SaveLoadSettingPanelContent onClipboardGenerate={this.generateConfig} onClipboardLoad={this.promptLoadConfig} 
+              <SaveLoadSettingPanelContent onClipboardGenerate={this.generateConfig} onClipboardLoad={this.openLoadConfigDialog} 
                 onFileGenerate={this.generateConfigAndSaveToFile} onFileLoad={this.selectConfigFile}></SaveLoadSettingPanelContent>
               </AccordionItemBody>
             </AccordionItem>
           </Accordion>
 
-          <hr/>
+          <hr className="panel-hr"/>
           
           <div className="finalRow" style={{textAlign: 'left'}}>          
             <button className="GogogoBtn" onClick={(event) => this.props.onReload(this.state)}> Go Go Go</button>
@@ -223,9 +266,38 @@ class Panel extends Component {
             <span>Number of log row: </span>
             <span className="NumOfLog">{this.props.rowLoaded}</span>
           </div>
-
-          <Dialog ref={(el) => { this.dialog = el }} />
         </div>
+
+        {
+            this.state.isDialogOpen &&
+            <Dialog
+                title="Enter config in json format here."
+                className="ConfigDialog"
+                onClose={() => this.closeLoadConfigDialog(null)}
+                model="true"
+                height='150px'
+                buttons={
+                    [
+                      {
+                        text: "OK",
+                        onClick: () => {
+                          const json = this.loadConfigTextInput.value
+                          this.closeLoadConfigDialog(json)
+                        },
+                        className: "ConfigDialogButton"
+                      },
+                      {
+                        text: "Cancel",
+                        onClick: () => this.closeLoadConfigDialog(null),
+                        className: "ConfigDialogButton"
+                      }
+                  ]
+                }>
+                <form>
+                  <input type="text" ref={(ref) => this.loadConfigTextInput= ref} style={{width: '450px'}}/>
+                </form>
+            </Dialog>
+        }
       </div>
     );
   }

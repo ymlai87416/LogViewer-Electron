@@ -25,7 +25,7 @@ class IgnoreTextPanelContent extends PanelContent {
         }
       )
 
-      this.setState(newState);
+      //this.setState(newState);
       this.props.onChanged(newState.textFilter);
     }
   }
@@ -37,8 +37,7 @@ class IgnoreTextPanelContent extends PanelContent {
       textFilter: {$set: []}
     })
 
-    this.setState(newState)
-
+    //this.setState(newState)
     this.props.onChanged(newState.textFilter);
   }
 
@@ -57,6 +56,17 @@ class IgnoreTextPanelContent extends PanelContent {
     })
   
     this.setState(newState)
+    //this.props.onChanged(newState.textFilter);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const currState = this.state
+    const newState = update(currState, 
+    {
+      textFilter: {$set: nextProps.textList}
+    })
+
+    this.setState(newState);
   }
 
   render() {

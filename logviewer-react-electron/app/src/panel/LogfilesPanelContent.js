@@ -13,7 +13,7 @@ class LogfilesPanelContent extends PanelContent {
     this.rgbArr = this.InitRGBList();
 
     this.state = {
-      logFileList: this.props.logFileList
+      logFileList: props.logFileList
     };
     
   }
@@ -43,11 +43,15 @@ class LogfilesPanelContent extends PanelContent {
         color: newColor,
         isEnabled: true
       }]});
+
+      /*
       const newState  = update(this.state,{
         logFileList: {$set: newFileSlots}
       });
 
       this.setState(newState);
+      */
+      this.props.onChanged(newFileSlots)
     }
   } 
   
@@ -56,11 +60,15 @@ class LogfilesPanelContent extends PanelContent {
       const logFileListLen = this.state.logFileList.length;
       var newLogFileList = update(this.state.logFileList, {$splice: [[logFileListLen-1, 1 ]]});
       
+      /*
       const newState  = update(this.state,{
         logFileList: {$set: newLogFileList}
       });
 
       this.setState(newState);
+      */
+
+      this.props.onChanged(newLogFileList)
     }
   }
 
@@ -106,18 +114,31 @@ class LogfilesPanelContent extends PanelContent {
     const changeIdx = newValue.serialNumber;
     const logFileList = this.state.logFileList;
     
-    
     var newlogFileList = update(logFileList, {
       $splice: [[changeIdx-1, 1, newValue]]
     });
 
+    /*
     var newState = update(this.state,{
       logFileList: {$set: newlogFileList}
     });
 
     this.setState(newState);
+    */
+
     this.props.onChanged(newlogFileList)
   } 
+
+  componentWillReceiveProps(nextProps) {
+    const newState = {
+      logFileList: nextProps.logFileList
+    };
+
+    console.log("componentWillReceiveProps");
+    console.log(newState);
+
+    this.setState(newState);
+  }
 
   render() {
     var fileslots = this.state.logFileList.map((logFile, index) => {

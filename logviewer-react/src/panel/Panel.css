@@ -51,6 +51,16 @@
   border-radius: 4px;
 }
 
+.ConfigDialog
+{
+  background-color: lightgray;
+}
+
+.ConfigDialogButton{
+  background-color: gray;
+  margin: 5px;
+}
+
 .finalRow > span{
   margin: 2px;
 }

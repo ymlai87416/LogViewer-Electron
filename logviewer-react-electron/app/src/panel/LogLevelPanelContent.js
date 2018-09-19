@@ -8,9 +8,8 @@ class LogLevelPanelContent extends PanelContent {
 
   constructor(props){
     super(props);
-
     this.state = {
-      selectedLogLevelList: LogLevelPanelContent.LOG_LEVELS
+      selectedLogLevelList: props.logLevelFilterList
     }
   }
 
@@ -19,8 +18,6 @@ class LogLevelPanelContent extends PanelContent {
       selectedLogLevelList: {$set: LogLevelPanelContent.LOG_LEVELS}
     })
 
-    this.setState(newState)
-
     this.props.onChanged(newState.selectedLogLevelList);
   }
 
@@ -28,8 +25,6 @@ class LogLevelPanelContent extends PanelContent {
     var newState = update(this.state, {
       selectedLogLevelList: {$set: []}
     })
-
-    this.setState(newState)
 
     this.props.onChanged(newState.selectedLogLevelList);
   }
@@ -51,7 +46,7 @@ class LogLevelPanelContent extends PanelContent {
           selectedLogLevelList: {$set: newselectedLogLevelList}
         });
 
-        this.setState(newState)
+        this.props.onChanged(newState.selectedLogLevelList);
       }  
     }
     else{
@@ -68,12 +63,8 @@ class LogLevelPanelContent extends PanelContent {
           selectedLogLevelList: {$set: newselectedLogLevelList}
         });
         
-        this.setState(newState);
+        this.props.onChanged(newState.selectedLogLevelList);
       }
-    }
-
-    if(newState != null){
-      this.props.onChanged(newState.selectedLogLevelList);
     }
   }
 
@@ -85,6 +76,14 @@ class LogLevelPanelContent extends PanelContent {
         <label for={element}>{element}</label>
       </span>
     )
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const newState = {
+      selectedLogLevelList: nextProps.logLevelFilterList
+    };
+
+    this.setState(newState);
   }
 
   render() {

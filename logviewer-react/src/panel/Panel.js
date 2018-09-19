@@ -13,6 +13,8 @@ import {
   AccordionItemTitle,
   AccordionItemBody,
 } from 'react-accessible-accordion';
+import Dialog from 'react-dialog'
+import 'react-dialog/css/index.css';
 
 class Panel extends Component {
 
@@ -46,6 +48,7 @@ class Panel extends Component {
       IncludeTextList: [],
 
       ShowMenu: true,
+      isDialogOpen: false,
     };
   }
 
@@ -80,6 +83,7 @@ class Panel extends Component {
   loadConfig = (jsonString) => {
     try {
       var loadedState = JSON.parse(jsonString);
+      loadedState["isDialogOpen"] = false;
       console.log(loadedState);
       this.setState(loadedState, () => 
         console.log("loadConfig: setstate completed"));
@@ -116,13 +120,35 @@ class Panel extends Component {
           this.loadConfig(result);
         })
       ]
-    })*/
+    })
 
     var input = prompt("Enter config json below:");
     if (input != null) {
       this.loadConfig(input);
-    }
+    }*/
   }
+
+  openLoadConfigDialog = () => {
+    var newState = update(this.state, {
+      isDialogOpen: {$set: true}
+    })
+
+    this.setState(newState);
+  }
+ 
+  closeLoadConfigDialog = (jsonMessage) => 
+  { 
+    if (jsonMessage){
+      this.loadConfig(jsonMessage);
+    }
+    else{
+      var newState = update(this.state, {
+        isDialogOpen: {$set: false}
+      })
+  
+      this.setState(newState);
+    }
+  };
 
   generateConfigAndSaveToFile = () =>{
     var textToSave = this.getConfigurationJson();
@@ -225,7 +251,7 @@ class Panel extends Component {
             <AccordionItem>
               <AccordionItemTitle><h3>Save/Load setting</h3></AccordionItemTitle>
               <AccordionItemBody>
-              <SaveLoadSettingPanelContent onClipboardGenerate={this.generateConfig} onClipboardLoad={this.promptLoadConfig} 
+              <SaveLoadSettingPanelContent onClipboardGenerate={this.generateConfig} onClipboardLoad={this.openLoadConfigDialog} 
                 onFileGenerate={this.generateConfigAndSaveToFile} onFileLoad={this.selectConfigFile}></SaveLoadSettingPanelContent>
               </AccordionItemBody>
             </AccordionItem>
@@ -241,6 +267,37 @@ class Panel extends Component {
             <span className="NumOfLog">{this.props.rowLoaded}</span>
           </div>
         </div>
+
+        {
+            this.state.isDialogOpen &&
+            <Dialog
+                title="Enter config in json format here."
+                className="ConfigDialog"
+                onClose={() => this.closeLoadConfigDialog(null)}
+                model="true"
+                height='150px'
+                buttons={
+                    [
+                      {
+                        text: "OK",
+                        onClick: () => {
+                          const json = this.loadConfigTextInput.value
+                          this.closeLoadConfigDialog(json)
+                        },
+                        className: "ConfigDialogButton"
+                      },
+                      {
+                        text: "Cancel",
+                        onClick: () => this.closeLoadConfigDialog(null),
+                        className: "ConfigDialogButton"
+                      }
+                  ]
+                }>
+                <form>
+                  <input type="text" ref={(ref) => this.loadConfigTextInput= ref} style={{width: '450px'}}/>
+                </form>
+            </Dialog>
+        }
       </div>
     );
   }

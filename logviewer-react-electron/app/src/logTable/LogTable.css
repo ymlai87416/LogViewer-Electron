@@ -1,15 +1,19 @@
 .LogTable {
   height: 97%;
+  width: 100%;
   overflow: auto;
   will-change:transform;
   display: table;
+  background-color: #2D2D30;
+  position: absolute;
+
 }
 
-.LogTable > .row{
+.LogTableInner > .row{
   display: table-row;
 }
 
-.LogTable > .row > .column{
+.LogTableInner > .row > .column{
   display: table-cell;
   float: left;
   text-align: right;
@@ -17,13 +21,15 @@
   font-size: 14px;
 }
 
-.LogTable > .row > .column:first-child{
+.LogTableInner > .row > .column:first-child{
   display: table-cell;
+  -webkit-user-select: none;
   user-select: none;
+  cursor: default;
   color: gray;
 }
 
-.LogTable > .row > .column > pre{
+.LogTableInner > .row > .column > pre{
   display: block;
   margin: 0px;
 }

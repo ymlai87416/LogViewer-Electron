@@ -30,21 +30,23 @@ class LogTable extends Component {
     const colorMap = this.props.colorMap;
     return (
       <div className="LogTable">
-        {
-          this.props.logEntriesList.map((element, index) => {
-            var color = colorMap[element.id];
-            return (
-              <div className="row" key={index}>
-                <div className="column">
-                  {index}
+        <div className="LogTableInner">
+          {
+            this.props.logEntriesList.map((element, index) => {
+              var color = colorMap[element.id];
+              return (
+                <div className="row" key={index}>
+                  <div className="column">
+                    {index+1}
+                  </div>
+                  <div className="column" style={{color: this.encodeColorString(color)}}>
+                    <pre>{element.content}</pre>
+                  </div>
                 </div>
-                <div className="column" style={{color: this.encodeColorString(color)}}>
-                  <pre>{element.content}</pre>
-                </div>
-              </div>
-            )
-          })
-        }
+              )
+            })
+          }
+        </div>
       </div>
     );
   }

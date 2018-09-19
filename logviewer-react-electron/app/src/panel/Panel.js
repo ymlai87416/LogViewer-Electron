@@ -14,7 +14,6 @@ import {
   AccordionItemBody,
 } from 'react-accessible-accordion';
 import Dialog from 'react-dialog'
-import 'react-dialog/css/index.css';
 
 class Panel extends Component {
 
@@ -138,7 +137,7 @@ class Panel extends Component {
  
   closeLoadConfigDialog = (jsonMessage) => 
   { 
-    if (jsonMessage){
+    if (jsonMessage != null){
       this.loadConfig(jsonMessage);
     }
     else{
@@ -190,12 +189,12 @@ class Panel extends Component {
     const currState = this.state
 
     return (
-      <div className={currState.ShowMenu ? "ControlPanelShow": "ControlPanelHide"}>
+      <div className="ControlPanel" aria-expanded={currState.ShowMenu ? true: false} >
         <button className="MenuButton" onClick={this.openMenu}>≡</button>
         <div className="ControlPanelContent">
           <Accordion>
             <AccordionItem>
-              <AccordionItemTitle><h3>Regex Settings</h3></AccordionItemTitle>
+              <AccordionItemTitle><h3><div className="accordion__arrow" role="presentation" />Regex Settings</h3></AccordionItemTitle>
               <AccordionItemBody>
                 <RegexPanelContent 
                   logFileFormatConfig={currState.LogFileFormatConfig} onChanged={(event) => this.onChangeHandler("LogFileFormatConfig", event)}>
@@ -208,7 +207,7 @@ class Panel extends Component {
 
           <Accordion>
             <AccordionItem expanded='true'>
-              <AccordionItemTitle><h3>Log files</h3></AccordionItemTitle>
+              <AccordionItemTitle><h3><div className="accordion__arrow" role="presentation" />Log files</h3></AccordionItemTitle>
               <AccordionItemBody>
                 <LogfilePanelContent logFileList={currState.LogFileList} 
                   onChanged={(event) => {this.onChangeHandlerWithReload("LogFileList", event); }}></LogfilePanelContent>
@@ -225,7 +224,7 @@ class Panel extends Component {
 
           <Accordion>
             <AccordionItem>
-              <AccordionItemTitle><h3>Ignore Text</h3></AccordionItemTitle>
+              <AccordionItemTitle><h3><div className="accordion__arrow" role="presentation" />Ignore Text</h3></AccordionItemTitle>
               <AccordionItemBody>
                 <TextListPanelContent header="Ignore text: " textList={currState.IgnoreTextList} 
                   onChanged={(event) => {this.onChangeHandlerWithReload("IgnoreTextList", event);}}></TextListPanelContent>
@@ -237,7 +236,7 @@ class Panel extends Component {
 
           <Accordion>
             <AccordionItem>
-              <AccordionItemTitle><h3>Include Text</h3></AccordionItemTitle>
+              <AccordionItemTitle><h3><div className="accordion__arrow" role="presentation" />Include Text</h3></AccordionItemTitle>
               <AccordionItemBody>
                 <TextListPanelContent header="Include text: " textList={currState.IncludeTextList} 
                   onChanged={(event) => {this.onChangeHandlerWithReload("IncludeTextList", event);}}></TextListPanelContent>
@@ -249,7 +248,7 @@ class Panel extends Component {
 
           <Accordion>
             <AccordionItem>
-              <AccordionItemTitle><h3>Save/Load setting</h3></AccordionItemTitle>
+              <AccordionItemTitle><h3><div className="accordion__arrow" role="presentation" />Save/Load setting</h3></AccordionItemTitle>
               <AccordionItemBody>
               <SaveLoadSettingPanelContent onClipboardGenerate={this.generateConfig} onClipboardLoad={this.openLoadConfigDialog} 
                 onFileGenerate={this.generateConfigAndSaveToFile} onFileLoad={this.selectConfigFile}></SaveLoadSettingPanelContent>
@@ -275,7 +274,7 @@ class Panel extends Component {
                 className="ConfigDialog"
                 onClose={() => this.closeLoadConfigDialog(null)}
                 model="true"
-                height='150px'
+                height='130px'
                 buttons={
                     [
                       {

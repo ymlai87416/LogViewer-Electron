@@ -7,14 +7,12 @@ import TextListPanelContent from './TextListPanelContent';
 import SaveLoadSettingPanelContent from './SaveLoadSettingPanelContent';
 import SubPanel from './SubPanel';
 import update from 'immutability-helper';
-import Dialog from 'react-bootstrap-dialog'
 import {
   Accordion,
   AccordionItem,
   AccordionItemTitle,
   AccordionItemBody,
 } from 'react-accessible-accordion';
-import 'bootstrap/dist/css/bootstrap.css'
 
 class Panel extends Component {
 
@@ -107,6 +105,7 @@ class Panel extends Component {
   }
 
   promptLoadConfig = () => {
+    /* bootstrap version....
     this.dialog.show({
       body: 'Enter config json below:',
       prompt: Dialog.TextPrompt(),
@@ -117,7 +116,12 @@ class Panel extends Component {
           this.loadConfig(result);
         })
       ]
-    })
+    })*/
+
+    var input = prompt("Enter config json below:");
+    if (input != null) {
+      this.loadConfig(input);
+    }
   }
 
   generateConfigAndSaveToFile = () =>{
@@ -236,8 +240,6 @@ class Panel extends Component {
             <span>Number of log row: </span>
             <span className="NumOfLog">{this.props.rowLoaded}</span>
           </div>
-
-          <Dialog ref={(el) => { this.dialog = el }} />
         </div>
       </div>
     );

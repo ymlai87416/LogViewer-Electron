@@ -10,9 +10,15 @@
     "build_win32": "electron-packager . logviewer --platform=win32 --arch=x64 --electron-version=2.0.9 --icon=myapp.ico --asar --ignore=node_modules/electron-* ",
     "build_win32_simple": "electron-packager . logviewer --electron-version=2.0.9 --ignore=node_modules/electron-* "
   },
-  "author": "J. Renato Ramos González <renato.etc.etc.etc@gmail.com>",
-  "repository": "pastahito/electron-react-webpack",
-  "license": "WTFPL",
+  "author": "nathan1658",
+  "contributors": [
+    { "name" : "ymlai87416"
+    , "email" : "ymlai87416@gmail.com"
+    , "url" : "http://www.ymlai87416.com/"
+    }
+  ],
+  "repository": "nathan1658/LogViewer-Electron",
+  "license": "CC0-1.0",
   "dependencies": {
     "immutability-helper": "^2.8.0",
     "moment": "^2.22.2",

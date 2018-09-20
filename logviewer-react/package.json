@@ -1,5 +1,5 @@
 {
-  "name": "logviewer-electron-react",
+  "name": "logviewer-react",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

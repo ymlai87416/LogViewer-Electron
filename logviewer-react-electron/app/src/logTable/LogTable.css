@@ -1,5 +1,5 @@
 .LogTable {
-  height: 97%;
+  height: 100%;
   width: 100%;
   overflow: auto;
   will-change:transform;
@@ -15,8 +15,7 @@
 
 .LogTableInner > .row > .column{
   display: table-cell;
-  float: left;
-  text-align: right;
+  text-align: left;
   margin-left: 10px;
   font-size: 14px;
 }
@@ -26,10 +25,22 @@
   -webkit-user-select: none;
   user-select: none;
   cursor: default;
+  float: left;
   color: gray;
 }
 
 .LogTableInner > .row > .column > pre{
   display: block;
   margin: 0px;
+}
+
+.LineNumber 
+{
+  float: left;
+  width: 68px;
+  color: #d4d4d4;
+}
+
+.LogContent{
+  float: left;
 }

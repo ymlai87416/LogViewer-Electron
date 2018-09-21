@@ -50,14 +50,7 @@ class Panel extends Component {
       isDialogOpen: false,
     };
   }
-
-  checkIfRunningInElectron = () => {
-    if ((window && window.process && window.process.type) != undefined) {
-      return true;
-    }
-    return false;
-  }
-
+  
   onChangeHandler = (key, value) => {
     var newState = update(this.state, {
       [key]: {$set: value}

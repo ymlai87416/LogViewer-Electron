@@ -4,6 +4,8 @@ import './App.css';
 import Panel from './panel/Panel';
 import LogTable from './logTable/LogTable';
 import update from 'immutability-helper';
+//import searchInPage from 'electron-in-page-search';
+//import {remote} from 'electron';
 
 var moment = require('moment');
 
@@ -16,6 +18,25 @@ class App extends Component {
       filteredEntriesList: [],
       colorMap: {},
     };
+
+    if(this.checkIfRunningInElectron()){
+      this.setupElectronDebug();
+    }
+  }
+
+  checkIfRunningInElectron = () => {
+    if ((window && window.process && window.process.type) != undefined) {
+      return true;
+    }
+    return false;
+  }
+  
+  setupElectronDebug = () => {
+    document.addEventListener("keydown", function (e) {
+      if (e.which === 123) {
+        remote.getCurrentWindow().toggleDevTools();
+      }
+    });
   }
 
   filterReadLog = (logEntries, logFileList, logLevelFilterList, ignoreTextList, includeTextList) => {

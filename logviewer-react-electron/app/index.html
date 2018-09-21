@@ -7,6 +7,37 @@
     </head>
     <body>
         <div id="app"></div>
+        <script>
+            var RunningInElectron = false;
+
+            if ((window && window.process && window.process.type) != undefined) {
+                RunningInElectron = true;
+            }
+
+            if (RunningInElectron) {
+                // Retrieve the electron in page search module
+                const searchInPage = require('electron-in-page-search').default;
+                const remote = require('electron').remote;
+                // or
+                // import searchInPage from 'electron-in-page-search';
+                // Create an instance with the current window
+                const inPageSearch = searchInPage(remote.getCurrentWebContents());
+                // Alternatively add the key event listener [CTRL+F]
+                window.addEventListener("keydown", (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.keyCode === 70) {
+                    inPageSearch.openSearchWindow();
+                }
+                }, false);
+
+                document.addEventListener("keydown", function (e) {
+                    if (e.which === 123) {
+                        require('remote').getCurrentWindow().toggleDevTools();
+                    } else if (e.which === 116) {
+                        location.reload();
+                    }
+                });
+            }
+        </script>
         <script src="build/bundle.js"></script>
     </body>
 </html>

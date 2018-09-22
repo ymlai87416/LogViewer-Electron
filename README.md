@@ -91,9 +91,7 @@ npm run build_win32
 
 ## Pending issue
 
-* This viewer adopts [React-virtualized](https://github.com/bvaughn/react-virtualized) module to improve the speed of displaying logs content, so it is not possible for a user to copy log across pages.
-
-* When copy across lines, additional space is added, will fix this ASAP.
+* If the log viewer adopts [React-virtualized](https://github.com/bvaughn/react-virtualized) module to improve the speed of displaying logs content, it is not possible for a user to copy log across pages.
 
 ## Credit
 

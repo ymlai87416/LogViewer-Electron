@@ -5,5 +5,5 @@ import './index.css';
 
 render(
     <App/>,
-    document.getElementById('app')
+    document.getElementById('root')
 )

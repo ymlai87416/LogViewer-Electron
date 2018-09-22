@@ -2,11 +2,20 @@ import cn from 'classnames';
 import React, { PureComponent } from 'react';
 import 'react-virtualized/styles.css'
 import {WindowScroller, List, AutoSizer} from 'react-virtualized'
+import { CellMeasurer, CellMeasurerCache } from 'react-virtualized';
 import styles from './LogTable.css';
+
+// In this example, average cell height is assumed to be about 50px.
+// This value will be used for the initial `Grid` layout.
+// Width is not dynamic.
+const cache = new CellMeasurerCache({
+  defaultHeight: 50,
+  fixedWidth: true
+});
 
 class LogTable extends PureComponent {
 
-  constructor(props){
+  constructor(props){ 
     super(props);
   }
 
@@ -23,18 +32,34 @@ class LogTable extends PureComponent {
     var green = this.rgbToHex(g);
     var blue = this.rgbToHex(b);
     return "#"+red+green+blue;
-}
+  }
+
+  componentDidMount() {
+    window.addEventListener('resize', this.updateDimensions);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.updateDimensions);
+  }
+
+  updateDimensions = () => {
+    cache.clearAll();
+  };
 
   render() {
+    cache.clearAll();
+
     var rowCount = 0;
     if(this.props.logEntriesList){
       rowCount = this.props.logEntriesList.length;
     }
 
     return (
+      <div >
       <WindowScroller
         ref={this._setRef}
-        scrollElement={window}>
+        scrollElement={window}
+        >
         {({height, isScrolling, registerChild, onChildScroll, scrollTop}) => (
           <div className={styles.WindowScrollerWrapper}>
             <AutoSizer disableHeight>
@@ -47,11 +72,12 @@ class LogTable extends PureComponent {
                     autoHeight
                     className={styles.List}
                     height={height}
+                    deferredMeasurementCache={cache}
                     isScrolling={isScrolling}
                     onScroll={onChildScroll}
                     overscanRowCount={2}
                     rowCount={rowCount}
-                    rowHeight={19}
+                    rowHeight={cache.rowHeight}
                     rowRenderer={this._rowRenderer}
                     scrollTop={scrollTop}
                     width={width}
@@ -62,6 +88,7 @@ class LogTable extends PureComponent {
           </div>
         )}
       </WindowScroller>
+      </div>
     );
   }
 
@@ -80,7 +107,7 @@ class LogTable extends PureComponent {
     return "#"+red+green+blue;
   }
 
-  _rowRenderer = ({index, isScrolling, isVisible, key, style}) => {
+  _rowRenderer = ({index, isScrolling, isVisible, key, parent, style}) => {
     const colorMap = this.props.colorMap;
     const row = this.props.logEntriesList[index];
     const color = colorMap[row.id];
@@ -97,14 +124,28 @@ class LogTable extends PureComponent {
         margin: '0px',
         fontFamily: 'Consolas, "Courier New", monospace',
         fontSize: '14px',
-        color: this.encodeColorString(color)
       }
     }catch(error){}
 
     return (
-      <div key={key} className={className} style={style}>
-        {row.content}
-      </div>
+      <CellMeasurer
+        cache={cache}
+        columnIndex={0}
+        key={key}
+        parent={parent}
+        rowIndex={index}
+      >
+        {({ measure }) => (
+          <div key={key} className={className} style={style}>
+            <div className="LineNumberRow">
+              {index+1}
+            </div>
+            <div className="LogContentRow" style={{color: this.encodeColorString(color),}}>
+              {row.content}
+            </div>
+          </div>
+        )}
+      </CellMeasurer>
     );
   };
 

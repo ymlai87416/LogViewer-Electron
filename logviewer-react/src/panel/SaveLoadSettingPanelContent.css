@@ -1,20 +1,25 @@
 
-.SaveLoadSettingPanelContent{
+:local(.SaveLoadSettingPanelContent){
   display: 'table';
   width: '100%';
   border: '0';
   text-align: 'left';
 }
 
-.SaveLoadSettingPanelContent > * > .column:first-child {
-  width: 100px;
+:local(.row){
+  display: table-row;
 }
 
-.SaveLoadSettingPanelContent > * > .column {
+:local(.column){
   display: table-cell;
 }
 
-.SaveLoadSettingPanelContent > * > .column > button {
+:local(.columnHeader){
+  width: 100px;
+  display: table-cell;
+}
+
+:local(.button){
   margin: 2px;
   width: 100px;
 }

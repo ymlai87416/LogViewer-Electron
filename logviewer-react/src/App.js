@@ -15,6 +15,7 @@ class App extends Component {
       logEntriesList: [],
       filteredEntriesList: [],
       colorMap: {},
+      isLoading: false,
     };
   }
 
@@ -27,7 +28,7 @@ class App extends Component {
         return val.toLowerCase().indexOf(e.toLowerCase()) >= 0;
       })
     }
-    var logFileIdList = logFileList.map(x => x.serialNumber);
+    var logFileIdList = logFileList.filter(x => x.isEnabled).map(x => x.serialNumber);
 
     logEntries.forEach(function (val) {
       if (!logFileIdList.includes(val.id))
@@ -58,7 +59,8 @@ class App extends Component {
           console.timeEnd("XMLHttpRequest: " + file);
           if (rawFile.status === 200 || rawFile.status == 0) {
             var allText = rawFile.responseText;
-            resolve({ allText: allText, file: file, id: id, index: index });
+            var result = { allText: allText, file: file, id: id, index: index };
+            resolve(result);
           }
           if (rawFile.status !== 200) {
             var errorMsg = 'URL: ' + rawFile.responseURL + '\nStatus code: ' + rawFile.status + '\nMessage: ' + rawFile.statusText;
@@ -83,7 +85,6 @@ class App extends Component {
   
   readFromLogFiles = (logFileList, regexForDate, datetimeFormat, logRegexFormat, logLevelRegexFormat) => {
     console.time("readFromLogFiles");
-    var logArr = [];
 
     console.time("readFromLogFiles: read all files");
     var promises = [];
@@ -92,7 +93,7 @@ class App extends Component {
       var path = logFileList[i].path;
       var id = logFileList[i].serialNumber;
       var isEnabled = logFileList[i].isEnabled;
-      if (path == "" || !isEnabled) {
+      if (path == "") {
         continue
       }
       var tmpTimerName = "Read " + path;
@@ -114,7 +115,6 @@ class App extends Component {
             var date = moment(dateStr, datetimeFormat);
             var logLevelRegex = new RegExp(logLevelRegexFormat, "gm");
             var logLevel = logLevelRegex.exec(arr[i])[1];
-            //logArr.push({datetime: date, content: arr[i], url: file, id: id, logLevel: logLevel, index: index});
             singleFileContent.push({datetime: date, content: arr[i], url: file, id: id, logLevel: logLevel, index: index});
           } catch (err) {
             console.log(err);
@@ -167,6 +167,14 @@ class App extends Component {
   }
 
   onReload = (param) => {
+    const currState = this.state;
+    var newState = update(currState, 
+      {
+        isLoading: {$set: true},
+      }
+    )
+    this.setState(newState);
+
     var readPromise = this.readFromLogFiles(param.LogFileList, 
       param.LogFileFormatConfig.RegexForDate, param.LogFileFormatConfig.DatetimeFormat, param.LogFileFormatConfig.LogRegexFormat, param.LogFileFormatConfig.LogLevelRegexFormat,
       param.LogLevelFilterList, param.IgnoreTextList, param.IncludeTextList);
@@ -183,7 +191,8 @@ class App extends Component {
         {
           colorMap: {$set: colorMap},
           logEntriesList: {$set: fullContent},
-          filteredEntriesList: {$set: filteredLogContent}
+          filteredEntriesList: {$set: filteredLogContent},
+          isLoading: {$set: false},
         }
       )
       self.setState(newState);
@@ -191,31 +200,45 @@ class App extends Component {
   }
 
   onFilterChange = (param) => {
-    const fullContent = this.state.logEntriesList;
-    var resultArray = this.filterReadLog(fullContent, param.LogFileList, 
-      param.LogLevelFilterList, param.IgnoreTextList, param.IncludeTextList);
-
-    var colorMap = this.getColorMap(param.LogFileList)
-
     const currState = this.state;
     var newState = update(currState, 
       {
-        colorMap: {$set: colorMap},
-        filteredEntriesList: {$set: resultArray}
+        isLoading: {$set: true},
       }
     )
-
     this.setState(newState);
+    let self = this;
+
+    new Promise(function (resolve, reject) {
+      const fullContent = self.state.logEntriesList;
+      var resultArray = self.filterReadLog(fullContent, param.LogFileList, 
+        param.LogLevelFilterList, param.IgnoreTextList, param.IncludeTextList);
+  
+      var colorMap = self.getColorMap(param.LogFileList)
+
+      resolve({resultArray: resultArray, colorMap: colorMap});
+    }).then(function({resultArray, colorMap}){
+      const currState = self.state;
+      var newState = update(currState, 
+        {
+          colorMap: {$set: colorMap},
+          filteredEntriesList: {$set: resultArray},
+          isLoading: {$set: false},
+        }
+      )
+      self.setState(newState);
+    });
   }
 
   render() {
     const logEntriesList = this.state.filteredEntriesList;
     const colorMap = this.state.colorMap;
     const rowLoad = this.state.filteredEntriesList.length;
+    const isLoading = this.state.isLoading;
 
     return (
       <div className="App">
-        <Panel onReload={this.onReload} onFilterChange={this.onFilterChange} rowLoaded={rowLoad}/>
+        <Panel onReload={this.onReload} onFilterChange={this.onFilterChange} rowLoaded={rowLoad} isLoading={isLoading}/>
         <LogTable logEntriesList={logEntriesList} colorMap={colorMap}/>
       </div>
     );

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PanelContent from './PanelContent';
 import update from 'immutability-helper';
-import './TextListPanelContent.css';
+import style from './TextListPanelContent.css';
 
 class IgnoreTextPanelContent extends PanelContent {
 
@@ -11,6 +11,7 @@ class IgnoreTextPanelContent extends PanelContent {
       textFilter: props.textList, 
       inputText: ""
     }
+    this.clearText = false;
   }
 
   addTextFilter = (event) => {
@@ -21,9 +22,9 @@ class IgnoreTextPanelContent extends PanelContent {
       var newState = update(currState, 
         {
           textFilter: {$push: [input]},
-          inputText: {$set: ""}
         }
       )
+      this.clearText = true;
 
       //this.setState(newState);
       this.props.onChanged(newState.textFilter);
@@ -34,8 +35,9 @@ class IgnoreTextPanelContent extends PanelContent {
     const currState = this.state;
     var newState = update(currState, 
     {
-      textFilter: {$set: []}
+      textFilter: {$set: []},
     })
+    this.clearText = true;
 
     //this.setState(newState)
     this.props.onChanged(newState.textFilter);
@@ -61,31 +63,42 @@ class IgnoreTextPanelContent extends PanelContent {
 
   componentWillReceiveProps(nextProps) {
     const currState = this.state
-    const newState = update(currState, 
-    {
-      textFilter: {$set: nextProps.textList}
-    })
+    let newState;
+    if(this.clearText){
+      newState = update(currState, 
+      {
+        textFilter: {$set: nextProps.textList},
+        inputText: {$set: ""}
+      })
+      this.clearText = false;
+    }
+    else{
+      newState = update(currState, 
+      {
+        textFilter: {$set: nextProps.textList},
+      })
+    }
 
     this.setState(newState);
   }
 
   render() {
     return (
-      <div className='TextListPanelContent'>
-          <div className="row">
-            <div className="column">
+      <div className={style.TextListPanelContent}>
+          <div className={style.row}>
+            <div className={style.column}>
               <span>
                 {this.props.header}
               </span>
             </div>
-            <div className="column">
+            <div className={style.column}>
               <input type="textbox" onChange={this.handleTextChange} value={this.state.inputText}/>
               <button onClick={this.addTextFilter}>Add</button>
               <button onClick={this.clearTextFilter}>Clear All</button>
             </div>
           </div>
-          <div className="row">
-            <div className="column">
+          <div className={style.row}>
+            <div className={style.column}>
               <div>
                 {
                   this.state.textFilter.map((value, index) => {

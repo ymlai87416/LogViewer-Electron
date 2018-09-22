@@ -47,17 +47,11 @@ class Panel extends Component {
       IncludeTextList: [],
 
       ShowMenu: true,
-      isDialogOpen: false,
+      IsDialogOpen: false,
+      IsLoading: false,
     };
   }
-
-  checkIfRunningInElectron = () => {
-    if ((window && window.process && window.process.type) != undefined) {
-      return true;
-    }
-    return false;
-  }
-
+  
   onChangeHandler = (key, value) => {
     var newState = update(this.state, {
       [key]: {$set: value}
@@ -75,6 +69,10 @@ class Panel extends Component {
     this.props.onFilterChange(newState);
   }
 
+  onExecuteReload = (param) => {
+    this.props.onReload(this.state)
+  }
+
   getConfigurationJson = () => {
     return JSON.stringify(this.state);
   }
@@ -82,7 +80,7 @@ class Panel extends Component {
   loadConfig = (jsonString) => {
     try {
       var loadedState = JSON.parse(jsonString);
-      loadedState["isDialogOpen"] = false;
+      loadedState["IsDialogOpen"] = false;
       console.log(loadedState);
       this.setState(loadedState, () => 
         console.log("loadConfig: setstate completed"));
@@ -107,29 +105,9 @@ class Panel extends Component {
     alert("Configuration copied to clipboard.")
   }
 
-  promptLoadConfig = () => {
-    /* bootstrap version....
-    this.dialog.show({
-      body: 'Enter config json below:',
-      prompt: Dialog.TextPrompt(),
-      actions: [
-        Dialog.CancelAction(),
-        Dialog.OKAction((dialog) => {
-          const result = dialog.value
-          this.loadConfig(result);
-        })
-      ]
-    })
-
-    var input = prompt("Enter config json below:");
-    if (input != null) {
-      this.loadConfig(input);
-    }*/
-  }
-
   openLoadConfigDialog = () => {
     var newState = update(this.state, {
-      isDialogOpen: {$set: true}
+      IsDialogOpen: {$set: true}
     })
 
     this.setState(newState);
@@ -142,7 +120,7 @@ class Panel extends Component {
     }
     else{
       var newState = update(this.state, {
-        isDialogOpen: {$set: false}
+        IsDialogOpen: {$set: false}
       })
   
       this.setState(newState);
@@ -259,16 +237,15 @@ class Panel extends Component {
           <hr className="panel-hr"/>
           
           <div className="finalRow" style={{textAlign: 'left'}}>          
-            <button className="GogogoBtn" onClick={(event) => this.props.onReload(this.state)}> Go Go Go</button>
-            <span className="Timer"></span>
-            <div className="loader" style={{display: 'inline-block', verticalAlign: 'middle', visibility: 'hidden'}}></div>
+            <button className="GogogoBtn" onClick={(event) => this.onExecuteReload(event)}> Go Go Go</button>
+            <div className="loader" style={{display: 'inline-block', verticalAlign: 'middle', visibility: this.props.isLoading ? 'visible': 'hidden'}}></div>
             <span>Number of log row: </span>
             <span className="NumOfLog">{this.props.rowLoaded}</span>
           </div>
         </div>
 
         {
-            this.state.isDialogOpen &&
+            this.state.IsDialogOpen &&
             <Dialog
                 title="Enter config in json format here."
                 className="ConfigDialog"

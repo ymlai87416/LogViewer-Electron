@@ -6,32 +6,7 @@
   display: table;
   background-color: #2D2D30;
   position: absolute;
-
-}
-
-.LogTableInner > .row{
-  display: table-row;
-}
-
-.LogTableInner > .row > .column{
-  display: table-cell;
-  text-align: left;
-  margin-left: 10px;
-  font-size: 14px;
-}
-
-.LogTableInner > .row > .column:first-child{
-  display: table-cell;
-  -webkit-user-select: none;
-  user-select: none;
-  cursor: default;
-  float: left;
-  color: gray;
-}
-
-.LogTableInner > .row > .column > pre{
-  display: block;
-  margin: 0px;
+  display: flex;
 }
 
 .LineNumber 
@@ -41,6 +16,62 @@
   color: #d4d4d4;
 }
 
+.LineNumberRow
+{
+  display: inline-block;
+  user-select: none;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 14px;
+  margin-right: 8px;
+  width: 60px;
+  text-align: right;
+  vertical-align:top;
+  color: #d4d4d4;
+}
+
 .LogContent{
   float: left;
+}
+
+.LogContentRow {
+  display: inline-block;
+  text-align: left;
+  width: calc(100% - 70px);
+  margin: 0px  0px 0px 0px;
+}
+
+.LogContentRow > pre{
+  margin: 0px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 14px;
+}
+
+.WindowScrollerWrapper {
+  flex: 1 1 auto;
+}
+
+.List {
+  border: 1px solid #e0e0e0;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 25px;
+  background-color: #fff;
+  border-bottom: 1px solid #e0e0e0;
+}
+.rowScrolling::after {
+  content: ': scrolling';
+  font-size: 0.65rem;
+  color: #aaa;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+}
+.checkbox {
+  margin-right: 5px;
 }

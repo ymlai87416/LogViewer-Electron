@@ -1,27 +1,26 @@
-
-.TextListPanelContent{
+:local(.TextListPanelContent){
   display: 'table';
   width: '100%';
   border: '0';
   text-align: 'left';
 }
 
-filteredTextStyle{
+:local(.filteredTextStyle){
   font-weight : 'bold';
 }
 
-.TextListPanelContent > row {
+:local(.row) {
   display: table-row;
 }
 
-.TextListPanelContent > * > .column:first-child {
+:local(.column):first-child {
   width: 100px;
 }
 
-.TextListPanelContent > * > .column {
+:local(.column) {
   display: table-cell;
 }
 
-.TextListPanelContent > * > .column > * {
+:local(.column) > * {
   margin: 2px;
 }

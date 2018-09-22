@@ -118,14 +118,6 @@ class LogfilesPanelContent extends PanelContent {
       $splice: [[changeIdx-1, 1, newValue]]
     });
 
-    /*
-    var newState = update(this.state,{
-      logFileList: {$set: newlogFileList}
-    });
-
-    this.setState(newState);
-    */
-
     this.props.onChanged(newlogFileList)
   } 
 

@@ -10,12 +10,20 @@ class LogfileEntry extends Component {
         super(props);
     }
 
-    onChange = (tag, event) => {
-        const field = tag
+    onPathChange = (event) => {
         const newValue = event.target.value;
 
         var newLogEntry = update(this.props.logEntry, {
-            [field]: {$set: newValue}
+            "path": {$set: newValue}
+        });
+        this.props.onChanged(newLogEntry);
+    }
+
+    onSelectChange = (event) => {
+        const newValue = event.target.checked;
+
+        var newLogEntry = update(this.props.logEntry, {
+            "isEnabled": {$set: newValue}
         });
         this.props.onChanged(newLogEntry);
     }
@@ -48,12 +56,12 @@ class LogfileEntry extends Component {
     render(){
         return (
             <div style={{padding: '5px', display:'flex', alignItems:'center'}} id={`div${this.props.logEntry.serialNumber}`}>
-                <input type='checkbox' onChange={(event) => this.onChange("isEnabled", event)} checked={this.props.logEntry.isEnabled} style={{margin: '5px'}}/> 
+                <input type='checkbox' onChange={(event) => this.onSelectChange(event)} checked={this.props.logEntry.isEnabled} style={{margin: '5px'}}/> 
                 <ColorPicker animation="slide-up"
                     color={this.encodeColorString(this.props.logEntry.color)} 
                     onChange={this.onColorChange} />
                 <span style={{width: '20%', margin: '5px'}}>Log file {this.props.logEntry.serialNumber}: </span>
-                <input type="text" class="input" style={{width:'370px'}} onChange={(event) => this.onChange("path", event)} value={this.props.logEntry.path}/>
+                <input type="text" class="input" style={{width:'370px'}} onChange={(event) => this.onPathChange(event)} value={this.props.logEntry.path}/>
             </div>
         )
     }

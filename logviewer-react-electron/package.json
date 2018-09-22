@@ -7,8 +7,7 @@
     "bundle": "webpack --mode development",
     "serve": "electron .",
     "start": "npm-run-all --parallel bundle serve",
-    "build_win32": "electron-packager . logviewer --platform=win32 --arch=x64 --electron-version=2.0.9 --icon=myapp.ico --asar --ignore=node_modules/electron-* ",
-    "build_win32_simple": "electron-packager . logviewer --electron-version=2.0.9"
+    "build_win32": "electron-packager . logviewer --platform=win32 --arch=x64 --electron-version=3.0.0"
   },
   "author": "nathan1658",
   "contributors": [
@@ -31,7 +30,8 @@
     "react-color": "^2.14.1",
     "react-dialog": "^1.0.2",
     "react-dom": "^16.5.0",
-    "react-scripts": "1.1.5"
+    "react-scripts": "1.1.5",
+    "react-virtualized": "^9.20.1"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
@@ -40,7 +40,7 @@
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
     "css-loader": "^0.28.10",
-    "electron": "^2.0.9",
+    "electron": "^3.0.0",
     "electron-packager": "^12.1.2",
     "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "file-loader": "^1.1.10",

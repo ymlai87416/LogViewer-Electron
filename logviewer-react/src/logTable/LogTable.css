@@ -18,12 +18,15 @@
 
 .LineNumberRow
 {
-  text-align: right;
-  height: 19px;
+  display: inline-block;
   user-select: none;
   font-family: Consolas, "Courier New", monospace;
   font-size: 14px;
   margin-right: 8px;
+  width: 60px;
+  text-align: right;
+  vertical-align:top;
+  color: #d4d4d4;
 }
 
 .LogContent{
@@ -31,8 +34,10 @@
 }
 
 .LogContentRow {
+  display: inline-block;
   text-align: left;
-  height: 19px;
+  width: calc(100% - 70px);
+  margin: 0px  0px 0px 0px;
 }
 
 .LogContentRow > pre{
@@ -52,7 +57,7 @@
 .row {
   display: flex;
   flex-direction: row;
-  align-items: left;
+  align-items: center;
   padding: 0 25px;
   background-color: #fff;
   border-bottom: 1px solid #e0e0e0;

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PanelContent from './PanelContent';
-import './SaveLoadSettingPanelContent.css';
+import style from'./SaveLoadSettingPanelContent.css';
 
 class SaveLoadSettingPanelContent extends PanelContent {
 
@@ -15,26 +15,26 @@ class SaveLoadSettingPanelContent extends PanelContent {
   render() {
     return (
       <div className="SaveLoadSettingPanelContent">
-          <div className="row">
-            <div className="column">
+          <div className={style.row}>
+            <div className={style.columnHeader}>
               <span>
                 Clipboard:
               </span>
             </div>
-            <div className="column">
-              <button onClick={this.props.onClipboardGenerate}>Generate</button>
-              <button onClick={this.props.onClipboardLoad}>Load</button>
+            <div className={style.column}>
+              <button className={style.button} onClick={this.props.onClipboardGenerate}>Generate</button>
+              <button className={style.button} onClick={this.props.onClipboardLoad}>Load</button>
             </div>
           </div>
-          <div className="row">
-            <div className="column">
+          <div className={style.row}>
+            <div className={style.columnHeader}>
               <span>
                 File:
               </span>
             </div>
-            <div className="column">
-              <button onClick={this.props.onFileGenerate}>Generate</button>
-              <button onClick={()=>{this.jsonFile.click()}} id="FileLoadConfigBtn">Load</button>
+            <div className={style.column}>
+              <button className={style.button} onClick={this.props.onFileGenerate}>Generate</button>
+              <button className={style.button} onClick={()=>{this.jsonFile.click()}} id="FileLoadConfigBtn">Load</button>
               <input type="file" ref={(ref) => this.jsonFile = ref} style={{display:'none'}} onChange={this.onChangeFile}/>
             </div>
           </div>

@@ -1,0 +1,12 @@
+.RegexPanelContent label{
+  width: 40%;
+  text-align: right;
+  margin-bottom: 5px;
+  display: inline-block;
+}
+
+.RegexPanelContent input{
+  width: 50%;
+  margin: 0 0 0 4%;
+  display: inline-block;
+}

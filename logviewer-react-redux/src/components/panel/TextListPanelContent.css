@@ -1,0 +1,26 @@
+:local(.TextListPanelContent){
+  display: 'table';
+  width: '100%';
+  border: '0';
+  text-align: 'left';
+}
+
+:local(.filteredTextStyle){
+  font-weight : 'bold';
+}
+
+:local(.row) {
+  display: table-row;
+}
+
+:local(.column):first-child {
+  width: 100px;
+}
+
+:local(.column) {
+  display: table-cell;
+}
+
+:local(.column) > * {
+  margin: 2px;
+}

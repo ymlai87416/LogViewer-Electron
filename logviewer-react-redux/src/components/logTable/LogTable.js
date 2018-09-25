@@ -1,157 +1,109 @@
-import cn from 'classnames';
-import React, { PureComponent } from 'react';
-import 'react-virtualized/styles.css'
-import {WindowScroller, List, AutoSizer} from 'react-virtualized'
-import { CellMeasurer, CellMeasurerCache } from 'react-virtualized';
-import styles from './LogTable.css';
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import {
+  getColorMap,
+  getLogEntriesList,
+  getLogFileList,
+  getLogLevelFilterList,
+  getIgnoreTextList,
+  getIncludeTextList,
+} from '../../selectors';
+import './LogTable.css';
 
-// In this example, average cell height is assumed to be about 50px.
-// This value will be used for the initial `Grid` layout.
-// Width is not dynamic.
-const cache = new CellMeasurerCache({
-  defaultHeight: 50,
-  fixedWidth: true
-});
+class LogTable extends Component {
 
-class LogTable extends PureComponent {
-
-  constructor(props){ 
+  constructor(props) {
     super(props);
   }
 
-  rgbToHex = (rgb) => { 
+  rgbToHex = (rgb) => {
     var hex = Number(rgb).toString(16);
     if (hex.length < 2) {
-            hex = "0" + hex;
+      hex = "0" + hex;
     }
     return hex;
   };
 
-  encodeColorString = ({r, g, b}) => {
+  encodeColorString = ({ r, g, b }) => {
     var red = this.rgbToHex(r);
     var green = this.rgbToHex(g);
     var blue = this.rgbToHex(b);
-    return "#"+red+green+blue;
+    return "#" + red + green + blue;
   }
 
-  componentDidMount() {
-    window.addEventListener('resize', this.updateDimensions);
-  }
+  filterReadLog = (logEntries, logFileList, logLevelFilterList, ignoreTextList, includeTextList) => {
+    console.time("filterReadLog");
 
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.updateDimensions);
-  }
+    var resultArray = [];
+    var arrayContainsSubString = function (filterArr, val) {
+      return filterArr.some(function (e) {
+        return val.toLowerCase().indexOf(e.toLowerCase()) >= 0;
+      })
+    }
+    var logFileIdList = logFileList.filter(x => x.isEnabled).map(x => x.serialNumber);
 
-  updateDimensions = () => {
-    cache.clearAll();
-  };
+    logEntries.forEach(function (val) {
+      if (!logFileIdList.includes(val.id))
+        return;
+      if (!logLevelFilterList.includes(val.logLevel))
+        return;
+      if (arrayContainsSubString(ignoreTextList, val.content))
+        return;
+      if (includeTextList.length > 0) {
+        if (!arrayContainsSubString(includeTextList, val.content))
+          return;
+      }
+      resultArray.push(val);
+    });
+
+    console.timeEnd("filterReadLog");
+
+    return resultArray;
+  }
 
   render() {
-    cache.clearAll();
+    const colorMap = this.props.colorMap;
+    const logEntries = this.props.logEntriesList;
+    const logFileList = this.props.logFileList;
+    const logLevelFilterList = this.props.logLevelFilterList;
+    const ignoreTextList = this.props.ignoreTextList;
+    const includeTextList = this.props.includeTextList;
 
-    var rowCount = 0;
-    if(this.props.logEntriesList){
-      rowCount = this.props.logEntriesList.length;
-    }
+    const filteredList = this.filterReadLog(logEntries, logFileList, logLevelFilterList, ignoreTextList, includeTextList);
 
     return (
-      <div >
-      <WindowScroller
-        ref={this._setRef}
-        scrollElement={window}
-        >
-        {({height, isScrolling, registerChild, onChildScroll, scrollTop}) => (
-          <div className={styles.WindowScrollerWrapper}>
-            <AutoSizer disableHeight>
-              {({width}) => (
-                <div ref={registerChild}>
-                  <List
-                    ref={el => {
-                      window.listEl = el;
-                    }}
-                    autoHeight
-                    className={styles.List}
-                    height={height}
-                    deferredMeasurementCache={cache}
-                    isScrolling={isScrolling}
-                    onScroll={onChildScroll}
-                    overscanRowCount={2}
-                    rowCount={rowCount}
-                    rowHeight={cache.rowHeight}
-                    rowRenderer={this._rowRenderer}
-                    scrollTop={scrollTop}
-                    width={width}
-                  />
+      <div className="LogTable">
+        <div className="LogTableInner">
+          {
+            filteredList.map((element, index) => {
+              var color = colorMap[element.id];
+              return (
+                <div className="row" key={index}>
+                  <div className="column">
+                    {index + 1}
+                  </div>
+                  <div className="column" style={{ color: this.encodeColorString(color) }}>
+                    <pre>{element.content}</pre>
+                  </div>
                 </div>
-              )}
-            </AutoSizer>
-          </div>
-        )}
-      </WindowScroller>
+              )
+            })
+          }
+        </div>
       </div>
     );
   }
-
-  rgbToHex = (rgb) => { 
-    var hex = Number(rgb).toString(16);
-    if (hex.length < 2) {
-            hex = "0" + hex;
-    }
-    return hex;
-  };
-
-  encodeColorString = ({r, g, b}) => {
-    var red = this.rgbToHex(r);
-    var green = this.rgbToHex(g);
-    var blue = this.rgbToHex(b);
-    return "#"+red+green+blue;
-  }
-
-  _rowRenderer = ({index, isScrolling, isVisible, key, parent, style}) => {
-    const colorMap = this.props.colorMap;
-    const row = this.props.logEntriesList[index];
-    const color = colorMap[row.id];
-
-    const className = cn(styles.row, {
-      [styles.rowScrolling]: isScrolling,
-      isVisible: isVisible
-    });
-
-    try{
-      style = {
-        ...style,
-        textAlign: 'left',
-        margin: '0px',
-        fontFamily: 'Consolas, "Courier New", monospace',
-        fontSize: '14px',
-      }
-    }catch(error){}
-
-    return (
-      <CellMeasurer
-        cache={cache}
-        columnIndex={0}
-        key={key}
-        parent={parent}
-        rowIndex={index}
-      >
-        {({ measure }) => (
-          <div key={key} className={className} style={style}>
-            <div className="LineNumberRow">
-              {index+1}
-            </div>
-            <div className="LogContentRow" style={{color: this.encodeColorString(color),}}>
-              {row.content}
-            </div>
-          </div>
-        )}
-      </CellMeasurer>
-    );
-  };
-
-  _setRef = windowScroller => {
-    this._windowScroller = windowScroller;
-  };
 }
 
-export default LogTable;
+const mapStateToProps = state => ({
+  colorMap: getColorMap(state),
+  logEntriesList: getLogEntriesList(state),
+  logFileList: getLogFileList(state),
+  logLevelFilterList: getLogLevelFilterList(state),
+  ignoreTextList: getIgnoreTextList(state),
+  includeTextList: getIncludeTextList(state),
+});
+
+export default connect(
+  mapStateToProps
+)(LogTable);

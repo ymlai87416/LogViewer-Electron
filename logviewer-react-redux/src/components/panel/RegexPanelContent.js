@@ -1,35 +1,24 @@
-import React, { Component } from 'react';
-import PanelContent from './PanelContent';
-import update from 'immutability-helper';
+import React, {Component} from 'react';
+import { connect } from 'react-redux';
+import {
+  getRegexForDate,
+  getDatetimeFormat,
+  getLogRegexFormat,
+  getLogLevelRegexFormat,
+} from '../../selectors';
+import { doRegexPanelFieldUpdate } from '../../actions';
+
 import './RegexPanelContent.css';
 
-class RegexPanelContent extends PanelContent {
+class RegexPanelContent extends Component {
 
-  constructor(props){
+  constructor(props) {
     super(props);
-
-    this.state = {
-      logFileFormatConfig: this.props.logFileFormatConfig
-    }
   }
 
   logFileFormatConfigHandler = (tag, event) => {
-    const currConfig = this.state.logFileFormatConfig;
     const value = event.target.value;
-    
-    var newConfig = update(currConfig, {
-      [tag]: {$set: value}
-    })
-
-    this.props.onChanged(newConfig);
-  }
-
-  componentWillReceiveProps(nextProps) {
-    const newState = {
-      logFileFormatConfig: nextProps.logFileFormatConfig
-    };
-
-    this.setState(newState);
+    this.props.onRegexPanelFieldUpdate(tag, value);
   }
 
   render() {
@@ -37,19 +26,33 @@ class RegexPanelContent extends PanelContent {
     return (
       <div className="RegexPanelContent">
         <label>Regex for date:</label>
-        <input id="dateRegex" value={this.state.logFileFormatConfig.RegexForDate} onChange={(event) => this.logFileFormatConfigHandler("RegexForDate", event)}/><br/>
+        <input id="dateRegex" value={this.props.regexForDate} onChange={(event) => this.logFileFormatConfigHandler("RegexForDate", event)} /><br />
 
         <label>Datetime format:</label>
-        <input id="dateFormat" value={this.state.logFileFormatConfig.DatetimeFormat} onChange={(event) => this.logFileFormatConfigHandler("DatetimeFormat", event)}/><br/>
+        <input id="dateFormat" value={this.props.datetimeFormat} onChange={(event) => this.logFileFormatConfigHandler("DatetimeFormat", event)} /><br />
 
         <label>Log Regex format:</label>
-        <input id="logRegexFormat" value={this.state.logFileFormatConfig.LogRegexFormat} onChange={(event) => this.logFileFormatConfigHandler("LogRegexFormat", event)}/><br/>
+        <input id="logRegexFormat" value={this.props.logRegexFormat} onChange={(event) => this.logFileFormatConfigHandler("LogRegexFormat", event)} /><br />
 
         <label>Loglevel Regex format:</label>
-        <input id="logLevelRegexFormat" value={this.state.logFileFormatConfig.LogLevelRegexFormat} onChange={(event) => this.logFileFormatConfigHandler("LogLevelRegexFormat", event)}/><br/>
+        <input id="logLevelRegexFormat" value={this.props.logLevelRegexFormat} onChange={(event) => this.logFileFormatConfigHandler("LogLevelRegexFormat", event)} /><br />
       </div>
     );
   }
 }
 
-export default RegexPanelContent;
+const mapStoreToProps = state => ({
+  regexForDate: getRegexForDate(state),
+  datetimeFormat: getDatetimeFormat(state),
+  logRegexFormat: getLogRegexFormat(state),
+  logLevelRegexFormat: getLogLevelRegexFormat(state),
+})
+
+const mapDispatchToProps = (dispatch) => ({
+  onRegexPanelFieldUpdate: (field, value) => dispatch(doRegexPanelFieldUpdate(field, value)),
+});
+
+export default connect(
+  mapStoreToProps,
+  mapDispatchToProps
+)(RegexPanelContent);

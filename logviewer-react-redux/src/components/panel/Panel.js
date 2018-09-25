@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import './Panel.css';
 import RegexPanelContent from './RegexPanelContent';
 import LogfilePanelContent from './LogfilesPanelContent';
 import LogLevelPanelContent from './LogLevelPanelContent';
 import TextListPanelContent from './TextListPanelContent';
 import SaveLoadSettingPanelContent from './SaveLoadSettingPanelContent';
-import SubPanel from './SubPanel';
 import update from 'immutability-helper';
 import {
   Accordion,
@@ -13,51 +13,28 @@ import {
   AccordionItemTitle,
   AccordionItemBody,
 } from 'react-accessible-accordion';
-import Dialog from 'react-dialog'
+import Dialog from 'react-dialog';
+import { 
+  doLogsFilter, 
+  doLogsFetch,
+  doTextListIgnoreUpdate,
+  doTextListIncludeUpdate,
+  doConfigClipboardLoadClose,
+  doControlPanelToggle,
+} from '../../actions';
+import { 
+  getShowControlPanel, 
+  getIgnoreTextList, 
+  getIncludeTextList,
+  getRowLoaded,
+  getIsConfigDialogOpen,
+  getIsLoading,
+} from '../../selectors';
 
 class Panel extends Component {
 
   constructor(props) {
     super(props);
-
-    const DEFAULT_DATE_REGEX = "[\\S]+\\s+[\\S]+";
-    const DEFAULT_DATE_FORMAT = "YYYY-MM-DD hh:mm:ss"; 
-    const DEFAULT_LOG_REGEX_FORMAT = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}[\\s\\S]+?((?=^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}|$)(?!\\n|\\s))";
-    const DEFAULT_LOG_LEVEL_REGEX_FORMAT = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\S*\\s([\\S]+)";
-    const LOG_LEVELS = ["ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "WARN"];
-
-    this.state = {
-      LogFileFormatConfig: {
-        RegexForDate: DEFAULT_DATE_REGEX,
-        DatetimeFormat: DEFAULT_DATE_FORMAT,
-        LogRegexFormat: DEFAULT_LOG_REGEX_FORMAT,
-        LogLevelRegexFormat: DEFAULT_LOG_LEVEL_REGEX_FORMAT,
-      },
-
-      LogFileList:  [
-        {
-          serialNumber: 1,
-          path: "",
-          color: {r: 74, g: 224, b: 140},
-          isEnabled: true
-        }
-      ],
-      LogLevelFilterList: LOG_LEVELS,
-      IgnoreTextList: [],
-      IncludeTextList: [],
-
-      ShowMenu: true,
-      IsDialogOpen: false,
-      IsLoading: false,
-    };
-  }
-  
-  onChangeHandler = (key, value) => {
-    var newState = update(this.state, {
-      [key]: {$set: value}
-    })
-
-    this.setState(newState)
   }
 
   onChangeHandlerWithReload = (key, value) => {
@@ -66,117 +43,52 @@ class Panel extends Component {
     })
 
     this.setState(newState)
-    this.props.onFilterChange(newState);
+    this.props.onFilterLog(newState);
   }
 
   onExecuteReload = (param) => {
-    this.props.onReload(this.state)
-  }
-
-  getConfigurationJson = () => {
-    return JSON.stringify(this.state);
+    this.props.onFetchLog(this.state)
   }
 
   loadConfig = (jsonString) => {
-    try {
-      var loadedState = JSON.parse(jsonString);
-      loadedState["IsDialogOpen"] = false;
-      console.log(loadedState);
-      this.setState(loadedState, () => 
-        console.log("loadConfig: setstate completed"));
-    } catch (err) {
-      alert("Error format. " + err);
-      return;
-    }
+    //TODO:
   }
 
   copyToClipboard = (text) => {
-    var dummy = document.createElement("input");
-    document.body.appendChild(dummy);
-    dummy.setAttribute('value', text);
-    dummy.select();
-    document.execCommand("copy");
-    document.body.removeChild(dummy);
+    //TODO:
   }
 
   generateConfig = () => {
-    var config = this.getConfigurationJson();
-    this.copyToClipboard(config);
-    alert("Configuration copied to clipboard.")
+    //TODO:
   }
 
   openLoadConfigDialog = () => {
-    var newState = update(this.state, {
-      IsDialogOpen: {$set: true}
-    })
-
-    this.setState(newState);
+    //TODO;
   }
  
   closeLoadConfigDialog = (jsonMessage) => 
   { 
-    if (jsonMessage != null){
-      this.loadConfig(jsonMessage);
-    }
-    else{
-      var newState = update(this.state, {
-        IsDialogOpen: {$set: false}
-      })
-  
-      this.setState(newState);
-    }
+    //TODO:
   };
 
   generateConfigAndSaveToFile = () =>{
-    var textToSave = this.getConfigurationJson();
-
-    var hiddenElement = document.createElement('a');
-    hiddenElement.href = 'data:attachment/text,' + encodeURI(textToSave);
-    hiddenElement.target = '_blank';
-    hiddenElement.download = 'config.json';
-    hiddenElement.click();
+    //TODO:
   }
 
   selectConfigFile = (filename) => {
-    var self = this;
-    try {	
-      var reader = new FileReader();
-      reader.onloadend = function () {
-        var jsonString = reader.result;
-        self.loadConfig(jsonString);
-      }
-      reader.readAsBinaryString(filename);
-
-    } catch (err) {
-      alert("Could not load file." + err);
-      return;
-    }
-  }
-
-  openMenu = () => {
-    const currValue = this.state.ShowMenu
-    
-    var newState = update(this.state, {
-      ShowMenu: {$set: !currValue}
-    })
-
-    this.setState(newState)
+    //TODO:
   }
 
   render() {
-    const currState = this.state
-
     return (
-      <div className="ControlPanel" aria-expanded={currState.ShowMenu ? true: false} >
-        <button className="MenuButton" onClick={this.openMenu}>≡</button>
+      <div className="ControlPanel" aria-expanded={this.props.showControlPanel ? true: false} >
+        <button className="MenuButton" onClick={this.props.onControlPanelToggle}>≡</button>
         <div className="ControlPanelContent">
           <Accordion>
             <AccordionItem>
               <AccordionItemTitle><h3><div className="accordion__arrow" role="presentation" />Regex Settings</h3></AccordionItemTitle>
               <AccordionItemBody>
-                <RegexPanelContent 
-                  logFileFormatConfig={currState.LogFileFormatConfig} onChanged={(event) => this.onChangeHandler("LogFileFormatConfig", event)}>
-                </RegexPanelContent>
+                <RegexPanelContent />
               </AccordionItemBody>
             </AccordionItem>
           </Accordion>
@@ -187,16 +99,14 @@ class Panel extends Component {
             <AccordionItem expanded='true'>
               <AccordionItemTitle><h3><div className="accordion__arrow" role="presentation" />Log files</h3></AccordionItemTitle>
               <AccordionItemBody>
-                <LogfilePanelContent logFileList={currState.LogFileList} 
-                  onChanged={(event) => {this.onChangeHandlerWithReload("LogFileList", event); }}></LogfilePanelContent>
+                <LogfilePanelContent />
               </AccordionItemBody>
             </AccordionItem>
           </Accordion>
           
           <hr className="panel-hr"/>
 
-          <LogLevelPanelContent logLevelFilterList={currState.LogLevelFilterList} 
-            onChanged={(event) => {this.onChangeHandlerWithReload("LogLevelFilterList", event);}}></LogLevelPanelContent>
+          <LogLevelPanelContent />
 
           <hr className="panel-hr"/>
 
@@ -204,8 +114,8 @@ class Panel extends Component {
             <AccordionItem>
               <AccordionItemTitle><h3><div className="accordion__arrow" role="presentation" />Ignore Text</h3></AccordionItemTitle>
               <AccordionItemBody>
-                <TextListPanelContent header="Ignore text: " textList={currState.IgnoreTextList} 
-                  onChanged={(event) => {this.onChangeHandlerWithReload("IgnoreTextList", event);}}></TextListPanelContent>
+                <TextListPanelContent header="Ignore text: " textList={this.props.ignoreTextList} 
+                  onTextListUpdate={this.props.onIgnoreTextListUpdate} ></TextListPanelContent>
               </AccordionItemBody>
             </AccordionItem>
           </Accordion>
@@ -216,8 +126,8 @@ class Panel extends Component {
             <AccordionItem>
               <AccordionItemTitle><h3><div className="accordion__arrow" role="presentation" />Include Text</h3></AccordionItemTitle>
               <AccordionItemBody>
-                <TextListPanelContent header="Include text: " textList={currState.IncludeTextList} 
-                  onChanged={(event) => {this.onChangeHandlerWithReload("IncludeTextList", event);}}></TextListPanelContent>
+                <TextListPanelContent header="Include text: " textList={this.props.includeTextList}
+                  onTextListUpdate={this.props.onIncludeTextListUpdate} ></TextListPanelContent>
               </AccordionItemBody>
             </AccordionItem>
           </Accordion>
@@ -228,8 +138,7 @@ class Panel extends Component {
             <AccordionItem>
               <AccordionItemTitle><h3><div className="accordion__arrow" role="presentation" />Save/Load setting</h3></AccordionItemTitle>
               <AccordionItemBody>
-              <SaveLoadSettingPanelContent onClipboardGenerate={this.generateConfig} onClipboardLoad={this.openLoadConfigDialog} 
-                onFileGenerate={this.generateConfigAndSaveToFile} onFileLoad={this.selectConfigFile}></SaveLoadSettingPanelContent>
+              <SaveLoadSettingPanelContent />
               </AccordionItemBody>
             </AccordionItem>
           </Accordion>
@@ -237,7 +146,7 @@ class Panel extends Component {
           <hr className="panel-hr"/>
           
           <div className="finalRow" style={{textAlign: 'left'}}>          
-            <button className="GogogoBtn" onClick={(event) => this.onExecuteReload(event)}> Go Go Go</button>
+            <button className="GogogoBtn" onClick={this.props.onFetchLog}> Go Go Go</button>
             <div className="loader" style={{display: 'inline-block', verticalAlign: 'middle', visibility: this.props.isLoading ? 'visible': 'hidden'}}></div>
             <span>Number of log row: </span>
             <span className="NumOfLog">{this.props.rowLoaded}</span>
@@ -245,11 +154,11 @@ class Panel extends Component {
         </div>
 
         {
-            this.state.IsDialogOpen &&
+            this.props.isConfigDialogOpen &&
             <Dialog
                 title="Enter config in json format here."
                 className="ConfigDialog"
-                onClose={() => this.closeLoadConfigDialog(null)}
+                onClose={() => this.props.onConfigClipboardDialogClose(false, null)}
                 model="true"
                 height='130px'
                 buttons={
@@ -258,13 +167,13 @@ class Panel extends Component {
                         text: "OK",
                         onClick: () => {
                           const json = this.loadConfigTextInput.value
-                          this.closeLoadConfigDialog(json)
+                          this.props.onConfigClipboardDialogClose(true, json)
                         },
                         className: "ConfigDialogButton"
                       },
                       {
                         text: "Cancel",
-                        onClick: () => this.closeLoadConfigDialog(null),
+                        onClick: () => this.props.onConfigClipboardDialogClose(false, null),
                         className: "ConfigDialogButton"
                       }
                   ]
@@ -279,4 +188,26 @@ class Panel extends Component {
   }
 }
 
-export default Panel;
+const mapStoreToProps = (state) => ({
+  showControlPanel: getShowControlPanel(state),
+  ignoreTextList: getIgnoreTextList(state),
+  includeTextList: getIncludeTextList(state),
+  rowLoaded: getRowLoaded(state),
+  isConfigDialogOpen: getIsConfigDialogOpen(state),
+  isLoading: getIsLoading(state),
+});
+
+const mapDispatchToProps = (dispatch) => ({
+  onControlPanelToggle: () => dispatch(doControlPanelToggle()),
+  onFilterLog: () => dispatch(doLogsFilter()),
+  onFetchLog: () => dispatch(doLogsFetch()),
+  onIgnoreTextListUpdate: (ignoreList) => dispatch(doTextListIgnoreUpdate(ignoreList)),
+  onIncludeTextListUpdate: (includeList) => dispatch(doTextListIncludeUpdate(includeList)),
+  onConfigClipboardDialogClose: (dialogResult, text) => dispatch(doConfigClipboardLoadClose(dialogResult, text)),
+});
+
+
+export default connect(
+  mapStoreToProps,
+  mapDispatchToProps
+)(Panel);

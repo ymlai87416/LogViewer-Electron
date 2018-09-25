@@ -1,97 +1,44 @@
 import React, { Component } from 'react';
-import PanelContent from './PanelContent';
-import update from 'immutability-helper';
+import { connect } from 'react-redux';
+import { LOG_LEVELS } from '../../constants/controlPanel';
+import { doLogLevelFilterChange } from '../../actions';
+import { getLogLevelFilterList } from '../../selectors';
 
-class LogLevelPanelContent extends PanelContent {
-
-  static LOG_LEVELS = ["ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "WARN"];
+class LogLevelPanelContent extends Component {
 
   constructor(props){
     super(props);
-    this.state = {
-      selectedLogLevelList: props.logLevelFilterList
-    }
+    this.logLevelCheckBox = [];
   }
 
   selectAllbtnOnClick = () => {
-    var newState = update(this.state, {
-      selectedLogLevelList: {$set: LogLevelPanelContent.LOG_LEVELS}
-    })
-
-    this.props.onChanged(newState.selectedLogLevelList);
+    this.props.onLogLevelFilterChange(LOG_LEVELS);
   }
 
   unSelectAllbtnOnClick = () => {
-    var newState = update(this.state, {
-      selectedLogLevelList: {$set: []}
-    })
-
-    this.props.onChanged(newState.selectedLogLevelList);
+    this.props.onLogLevelFilterChange([]);
   }
 
   onCheckBoxChange = (event) => {
-    const isSelected = event.target.checked;
-    const logLevel = event.target.id;
-    const currState = this.state;
-    var newState = null;
-
-    console.log("onCheckBoxChange")
-    if(isSelected){
-      if(!currState.selectedLogLevelList.includes(logLevel)){
-        var newselectedLogLevelList = update(this.state.selectedLogLevelList, {
-          $push: [logLevel]
-        });
-
-        newState = update(this.state, {
-          selectedLogLevelList: {$set: newselectedLogLevelList}
-        });
-
-        this.props.onChanged(newState.selectedLogLevelList);
-      }  
-    }
-    else{
-      if(currState.selectedLogLevelList.includes(logLevel)){
-        var newselectedLogLevelList = []
-
-        var count = currState.selectedLogLevelList.length;
-        for(var i=0; i<count; ++i){
-          if(currState.selectedLogLevelList[i] != logLevel)
-            newselectedLogLevelList.push(currState.selectedLogLevelList[i]);
-        }
-
-        newState = update(this.state, {
-          selectedLogLevelList: {$set: newselectedLogLevelList}
-        });
-        
-        this.props.onChanged(newState.selectedLogLevelList);
-      }
-    }
+    let logLevelsEnabled = this.logLevelCheckBox.filter(x => x.checked).map(x => x.id);
+    this.props.onLogLevelFilterChange(logLevelsEnabled);
   }
 
-  createLogLevelCheckBox = (element, index, currState) => {
-    const isSelected = currState.selectedLogLevelList.includes(element);
+  createLogLevelCheckBox = (element, index) => {
+    const isSelected = this.props.logLevelFilterList.includes(element);
     return(
       <span key={index}>
-        <input type="checkbox" id={element} checked={isSelected} onChange={this.onCheckBoxChange}/>
+        <input type="checkbox" id={element} checked={isSelected} ref={(input) => {this.logLevelCheckBox[index] = input }} onChange={this.onCheckBoxChange}/>
         <label for={element}>{element}</label>
       </span>
     )
   }
 
-  componentWillReceiveProps(nextProps) {
-    const newState = {
-      selectedLogLevelList: nextProps.logLevelFilterList
-    };
-
-    this.setState(newState);
-  }
-
   render() {
-    const currState = this.state;
     return (
       <div className="LogLevelPanelContent">
         <div>
-          {LogLevelPanelContent.LOG_LEVELS.map((element, index) => {return this.createLogLevelCheckBox(element, index, currState);})}
+          {LOG_LEVELS.map((element, index) => {return this.createLogLevelCheckBox(element, index);})}
         </div>
         <br/>
         <button onClick={this.selectAllbtnOnClick} style={{margin: '2px'}}>Select All</button>
@@ -101,4 +48,16 @@ class LogLevelPanelContent extends PanelContent {
   }
 }
 
-export default LogLevelPanelContent;
+const mapStateToProps = (state) => ({
+  logLevelFilterList: getLogLevelFilterList(state),
+});
+
+const mapDispatchToProps = (dispatch) => ({
+  onLogLevelFilterChange: (logLevelList) => dispatch(doLogLevelFilterChange(logLevelList)),
+});
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(LogLevelPanelContent);
+
